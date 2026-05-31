@@ -1,0 +1,4003 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>智慧專題創作平台 ｜ 心智圖 → IPO → Python → PPT → 影音腳本</title>
+<script src="https://cdn.jsdelivr.net/gh/gitbrent/pptxgenjs@3.12.0/dist/pptxgen.bundle.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/jszip@3.10.1/dist/jszip.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/polyfills.umd.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/jspdf-autotable@3.8.2/dist/jspdf.plugin.autotable.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/docx@8.5.0/build/index.umd.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/qrcode@1.5.3/build/qrcode.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/mermaid@10.9.1/dist/mermaid.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
+<style>
+:root{
+  --bg:#0f1722; --bg2:#1e293b; --bg3:#2d1b4e;
+  --surface:rgba(30,41,59,.7); --surface2:rgba(15,23,42,.65);
+  --border:rgba(148,163,184,.3); --border2:rgba(148,163,184,.15);
+  --text:#e2e8f0; --muted:#94a3b8; --dim:#64748b;
+  --accent:#a855f7; --accent2:#3b82f6; --accent3:#ec4899;
+  --ok:#22c55e; --warn:#f59e0b; --err:#ef4444;
+  --code-bg:#0a0f1c;
+}
+*{margin:0;padding:0;box-sizing:border-box}
+html,body{width:100%;min-height:100%;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI','Microsoft JhengHei','Noto Sans CJK TC',sans-serif;color:var(--text)}
+body{
+  background:linear-gradient(135deg,#0f1722 0%,#1e293b 25%,#2d1b4e 50%,#0f1722 75%,#1e293b 100%);
+  background-attachment:fixed; min-height:100vh; padding:0;
+  position:relative; overflow-x:hidden;
+}
+.blob{position:fixed;border-radius:50%;filter:blur(120px);opacity:.1;z-index:0;pointer-events:none;animation:blob 9s infinite}
+.blob1{width:320px;height:320px;background:var(--accent);top:80px;left:40px}
+.blob2{width:320px;height:320px;background:var(--accent2);top:160px;right:40px;animation-delay:3s}
+.blob3{width:320px;height:320px;background:var(--accent3);bottom:-32px;left:50%;animation-delay:6s}
+@keyframes blob{0%,100%{transform:translate(0,0) scale(1)}33%{transform:translate(30px,-50px) scale(1.1)}66%{transform:translate(-20px,20px) scale(.9)}}
+
+.app{display:grid;grid-template-columns:280px 1fr;min-height:100vh;position:relative;z-index:10}
+
+/* ============ Sidebar ============ */
+.sidebar{
+  background:rgba(15,23,42,.85);backdrop-filter:blur(20px);
+  border-right:1px solid var(--border2); padding:24px 20px;
+  position:sticky;top:0;height:100vh;overflow-y:auto;
+}
+.brand{font-size:18px;font-weight:800;background:linear-gradient(135deg,#a855f7,#3b82f6,#ec4899);
+  -webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;
+  margin-bottom:4px;line-height:1.3}
+.brand-sub{font-size:11px;color:var(--muted);margin-bottom:24px}
+
+.steps{display:flex;flex-direction:column;gap:6px;margin-bottom:24px}
+.step-item{
+  display:flex;align-items:center;gap:12px;padding:12px 14px;
+  border-radius:10px;cursor:pointer;transition:all .2s;
+  border:1px solid transparent;background:transparent;
+  text-align:left;width:100%;color:var(--text);font-family:inherit;
+}
+.step-item:hover{background:rgba(168,85,247,.08);border-color:var(--border2)}
+.step-item.active{background:rgba(168,85,247,.18);border-color:rgba(168,85,247,.4);box-shadow:0 0 20px rgba(168,85,247,.15)}
+.step-item.done .step-num{background:var(--ok);color:#fff}
+.step-item:disabled{opacity:.45;cursor:not-allowed}
+.step-num{width:30px;height:30px;border-radius:8px;background:rgba(148,163,184,.15);
+  display:flex;align-items:center;justify-content:center;font-weight:700;font-size:13px;flex-shrink:0}
+.step-item.active .step-num{background:linear-gradient(135deg,var(--accent),var(--accent2));color:#fff}
+.step-info{flex:1;min-width:0}
+.step-name{font-size:13px;font-weight:600;line-height:1.2}
+.step-desc{font-size:10px;color:var(--muted);margin-top:2px;line-height:1.2}
+.step-check{color:var(--ok);font-size:14px}
+
+.sidebar-section{margin-top:24px;padding-top:20px;border-top:1px solid var(--border2)}
+.sidebar-section h4{font-size:11px;font-weight:700;color:var(--muted);
+  text-transform:uppercase;letter-spacing:1px;margin-bottom:10px}
+.ai-status{padding:10px 12px;border-radius:8px;background:var(--surface2);
+  border:1px solid var(--border2);font-size:11px;line-height:1.5}
+.ai-status .dot{display:inline-block;width:8px;height:8px;border-radius:50%;
+  background:var(--err);margin-right:6px;vertical-align:middle}
+.ai-status.ok .dot{background:var(--ok)}
+.sidebar-btn{
+  width:100%;padding:10px;margin-top:8px;border-radius:8px;
+  background:var(--surface);border:1px solid var(--border2);
+  color:var(--text);cursor:pointer;font-size:12px;font-family:inherit;
+  transition:all .2s;
+}
+.sidebar-btn:hover{background:rgba(168,85,247,.15);border-color:var(--accent)}
+
+/* ============ Main ============ */
+.main{padding:32px 40px 80px;max-width:1400px;width:100%}
+.page-header{margin-bottom:28px}
+.page-title{font-size:30px;font-weight:800;line-height:1.2;
+  background:linear-gradient(135deg,#fff 0%,#cbd5e1 100%);
+  -webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+.page-sub{font-size:14px;color:var(--muted);margin-top:8px}
+
+.panel{display:none;animation:fadeIn .3s ease}
+.panel.active{display:block}
+@keyframes fadeIn{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
+
+.card{
+  background:var(--surface);backdrop-filter:blur(20px);
+  border:1px solid var(--border2);border-radius:14px;
+  padding:24px;margin-bottom:20px;
+}
+.card-title{font-size:16px;font-weight:700;margin-bottom:6px;display:flex;align-items:center;gap:8px}
+.card-desc{font-size:13px;color:var(--muted);margin-bottom:16px;line-height:1.5}
+
+/* ============ Form controls ============ */
+label{display:block;font-size:12px;font-weight:600;color:var(--muted);margin-bottom:6px;text-transform:uppercase;letter-spacing:.5px}
+input[type=text],input[type=password],input[type=number],select,textarea{
+  width:100%;padding:11px 13px;border-radius:9px;
+  background:var(--surface2);border:1px solid var(--border2);
+  color:var(--text);font-size:14px;font-family:inherit;
+  transition:all .2s;
+}
+input:focus,select:focus,textarea:focus{outline:none;border-color:var(--accent);box-shadow:0 0 0 3px rgba(168,85,247,.15)}
+textarea{resize:vertical;min-height:100px;line-height:1.55;font-family:'SFMono-Regular','Monaco',Consolas,'Microsoft JhengHei',monospace}
+textarea.tall{min-height:180px}
+.field{margin-bottom:14px}
+
+.btn{
+  display:inline-flex;align-items:center;gap:8px;
+  padding:11px 20px;border-radius:9px;border:none;cursor:pointer;
+  font-size:14px;font-weight:600;font-family:inherit;
+  transition:all .2s;background:var(--surface);color:var(--text);
+  border:1px solid var(--border2);
+}
+.btn:hover{transform:translateY(-1px);box-shadow:0 6px 20px rgba(0,0,0,.3)}
+.btn:disabled{opacity:.5;cursor:not-allowed;transform:none}
+.btn-primary{background:linear-gradient(135deg,var(--accent),var(--accent2));color:#fff;border:none}
+.btn-primary:hover{box-shadow:0 8px 24px rgba(168,85,247,.4)}
+.btn-accent{background:linear-gradient(135deg,var(--accent3),var(--accent));color:#fff;border:none}
+.btn-ghost{background:transparent}
+.btn-ok{background:var(--ok);color:#0a1729;border:none;font-weight:700}
+.btn-row{display:flex;gap:10px;flex-wrap:wrap;margin-top:12px}
+
+/* ============ Grid layouts ============ */
+.grid-3{display:grid;grid-template-columns:repeat(3,1fr);gap:16px}
+.grid-2{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+@media(max-width:1024px){.grid-3,.grid-2{grid-template-columns:1fr}}
+
+.ipo-block{padding:16px;border-radius:11px;border:1px solid var(--border2);background:var(--surface2)}
+.ipo-block[data-type=input]{border-left:4px solid #3b82f6}
+.ipo-block[data-type=process]{border-left:4px solid #a855f7}
+.ipo-block[data-type=output]{border-left:4px solid #ec4899}
+.ipo-block h5{font-size:13px;margin-bottom:10px;color:var(--text);font-weight:700;letter-spacing:.5px}
+.ipo-block ul{list-style:none;padding-left:0}
+.ipo-block li{font-size:13px;padding:6px 0;border-bottom:1px dashed var(--border2);color:var(--text)}
+.ipo-block li:last-child{border-bottom:none}
+
+/* ============ IPO Table ============ */
+table.ipo-table{width:100%;border-collapse:collapse;background:var(--surface2);border-radius:10px;overflow:hidden}
+.ipo-table th{background:rgba(168,85,247,.15);padding:12px;text-align:left;font-size:13px;font-weight:700;color:var(--text);border-bottom:1px solid var(--border)}
+.ipo-table td{padding:12px;font-size:13px;border-bottom:1px solid var(--border2);color:var(--text);vertical-align:top}
+.ipo-table td[contenteditable]:focus{outline:2px solid var(--accent);background:rgba(168,85,247,.08)}
+.ipo-table tr:last-child td{border-bottom:none}
+.col-stage{width:120px;font-weight:700}
+.col-stage.input{color:#3b82f6}
+.col-stage.process{color:#a855f7}
+.col-stage.output{color:#ec4899}
+
+/* ============ Code display ============ */
+.code-box{background:var(--code-bg);border:1px solid var(--border2);border-radius:10px;padding:18px;
+  font-family:'SFMono-Regular','Monaco',Consolas,monospace;font-size:13px;
+  line-height:1.6;overflow-x:auto;color:#e2e8f0;max-height:600px;overflow-y:auto;white-space:pre}
+.code-box .kw{color:#c084fc;font-weight:600}
+.code-box .str{color:#86efac}
+.code-box .com{color:#64748b;font-style:italic}
+.code-box .num{color:#fbbf24}
+.code-box .fn{color:#60a5fa}
+
+/* ============ Tabs ============ */
+.tabs{display:flex;gap:4px;margin-bottom:18px;border-bottom:1px solid var(--border2);padding-bottom:0}
+.tab{padding:10px 16px;background:transparent;border:none;color:var(--muted);font-family:inherit;
+  font-size:13px;font-weight:600;cursor:pointer;border-bottom:2px solid transparent;transition:all .2s}
+.tab:hover{color:var(--text)}
+.tab.active{color:var(--accent);border-bottom-color:var(--accent)}
+.tab-pane{display:none}
+.tab-pane.active{display:block}
+
+/* ============ Misc ============ */
+.toast{position:fixed;bottom:30px;left:50%;transform:translateX(-50%);
+  background:rgba(15,23,42,.95);backdrop-filter:blur(12px);
+  border:1px solid var(--accent);padding:12px 22px;border-radius:10px;
+  font-size:14px;z-index:9999;animation:toastIn .3s ease;
+  box-shadow:0 8px 30px rgba(0,0,0,.4)}
+@keyframes toastIn{from{opacity:0;transform:translate(-50%,20px)}to{opacity:1;transform:translate(-50%,0)}}
+
+.alert{padding:12px 16px;border-radius:9px;margin-bottom:14px;font-size:13px;line-height:1.5}
+.alert-info{background:rgba(59,130,246,.12);border:1px solid rgba(59,130,246,.4);color:#bfdbfe}
+.alert-warn{background:rgba(245,158,11,.12);border:1px solid rgba(245,158,11,.4);color:#fcd34d}
+.alert-ok{background:rgba(34,197,94,.12);border:1px solid rgba(34,197,94,.4);color:#86efac}
+.alert-err{background:rgba(239,68,68,.12);border:1px solid rgba(239,68,68,.4);color:#fca5a5}
+
+.modal-backdrop{position:fixed;inset:0;background:rgba(0,0,0,.7);backdrop-filter:blur(8px);
+  display:none;align-items:center;justify-content:center;z-index:1000;padding:20px}
+.modal-backdrop.show{display:flex}
+.modal{background:var(--bg2);border:1px solid var(--border);border-radius:14px;
+  padding:28px;max-width:600px;width:100%;max-height:85vh;overflow-y:auto}
+.modal h3{margin-bottom:16px;font-size:18px}
+.close-btn{float:right;background:none;border:none;color:var(--muted);font-size:24px;cursor:pointer;line-height:1}
+.close-btn:hover{color:var(--text)}
+
+.spinner{display:inline-block;width:16px;height:16px;border:2px solid rgba(255,255,255,.3);
+  border-top-color:#fff;border-radius:50%;animation:spin .8s linear infinite;vertical-align:middle}
+@keyframes spin{to{transform:rotate(360deg)}}
+
+.progress-track{height:6px;background:var(--surface2);border-radius:3px;overflow:hidden;margin:12px 0}
+.progress-fill{height:100%;background:linear-gradient(90deg,var(--accent),var(--accent2));
+  width:0;transition:width .4s ease;border-radius:3px}
+
+.chip{display:inline-block;padding:4px 10px;border-radius:12px;background:rgba(168,85,247,.15);
+  border:1px solid rgba(168,85,247,.3);font-size:11px;color:#e9d5ff;margin-right:6px}
+
+.nav-buttons{display:flex;justify-content:space-between;margin-top:24px;padding-top:20px;border-top:1px solid var(--border2)}
+
+.script-block{background:var(--surface2);border:1px solid var(--border2);border-radius:10px;padding:16px;margin-bottom:14px}
+.script-block .stage{display:inline-block;padding:3px 10px;border-radius:12px;font-size:11px;font-weight:700;margin-right:8px}
+.stage.qi{background:#3b82f6;color:#fff}
+.stage.cheng{background:#a855f7;color:#fff}
+.stage.zhuan{background:#ec4899;color:#fff}
+.stage.he{background:#22c55e;color:#0a1729}
+.script-block .time{font-size:12px;color:var(--muted)}
+.script-block .narr{margin-top:10px;padding:12px;background:var(--surface);border-radius:7px;line-height:1.6;font-size:13px}
+.script-block .visual{margin-top:8px;padding:10px;background:rgba(245,158,11,.08);
+  border-left:3px solid var(--warn);border-radius:5px;font-size:12px;color:#fcd34d;line-height:1.5}
+
+@media(max-width:900px){
+  .app{grid-template-columns:1fr}
+  .sidebar{position:relative;height:auto}
+  .main{padding:20px}
+}
+
+/* ============ v3 教學中心 Tutorial Center ============ */
+.tut-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(320px,1fr));gap:18px}
+.tut-card{background:var(--surface);border:1px solid var(--border2);border-radius:14px;overflow:hidden;display:flex;flex-direction:column}
+.tut-card .tut-head{padding:14px 16px;display:flex;align-items:center;gap:10px;border-bottom:1px solid var(--border2)}
+.tut-card .tut-head .tut-ic{width:34px;height:34px;border-radius:9px;display:flex;align-items:center;justify-content:center;font-size:18px;background:rgba(168,85,247,.15)}
+.tut-card .tut-head .tut-t{font-size:14px;font-weight:700}
+.tut-card .tut-head .tut-s{font-size:11px;color:var(--muted)}
+.video-wrap{position:relative;width:100%;aspect-ratio:16/9;background:var(--code-bg)}
+.video-wrap iframe{position:absolute;inset:0;width:100%;height:100%;border:0}
+.video-empty{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;color:var(--muted);font-size:13px;text-align:center;padding:16px}
+.tut-actions{padding:14px 16px;display:flex;gap:8px;flex-wrap:wrap;margin-top:auto}
+.pdf-frame{width:100%;height:520px;border:1px solid var(--border2);border-radius:12px;background:#fff}
+/* QR section */
+.qr-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:16px}
+.qr-card{background:var(--surface2);border:1px solid var(--border2);border-radius:12px;padding:18px;text-align:center}
+.qr-card .qr-dot{display:inline-block;width:10px;height:10px;border-radius:50%;margin-right:6px;vertical-align:middle}
+.qr-card canvas,.qr-card img{border-radius:10px;background:#fff;padding:8px;max-width:100%;height:auto}
+.qr-card .qr-label{font-size:13px;font-weight:700;margin-bottom:12px}
+.qr-card .qr-url{font-size:10px;color:var(--dim);margin-top:8px;word-break:break-all;line-height:1.4}
+
+/* ============ v3 學習後測問卷 Questionnaire ============ */
+.quiz-progress{position:sticky;top:0;z-index:30;background:rgba(15,23,42,.92);backdrop-filter:blur(12px);
+  border:1px solid var(--border2);border-radius:12px;padding:12px 16px;margin-bottom:18px;display:flex;align-items:center;gap:14px}
+.quiz-progress .bar{flex:1;height:8px;border-radius:6px;background:rgba(148,163,184,.2);overflow:hidden}
+.quiz-progress .bar i{display:block;height:100%;width:0;border-radius:6px;background:linear-gradient(90deg,var(--accent),var(--accent2));transition:width .3s}
+.quiz-progress .pnum{font-size:13px;font-weight:700;color:var(--text);white-space:nowrap}
+.quiz-sec{margin-bottom:18px}
+.quiz-sec-head{display:flex;align-items:center;gap:10px;margin-bottom:6px}
+.quiz-sec-head .qs-badge{font-size:11px;font-weight:700;padding:3px 9px;border-radius:20px;background:rgba(168,85,247,.18);color:#d8b4fe;white-space:nowrap}
+.quiz-sec-head .qs-title{font-size:16px;font-weight:700}
+.quiz-sec-head .qs-map{font-size:11px;color:var(--muted)}
+.q-item{padding:14px 0;border-bottom:1px dashed var(--border2)}
+.q-item:last-child{border-bottom:none}
+.q-text{font-size:14px;font-weight:600;margin-bottom:10px;line-height:1.5}
+.q-text .q-no{color:var(--accent);font-weight:800;margin-right:6px}
+.q-text .req{color:var(--err);margin-left:4px}
+.likert{display:flex;gap:6px;flex-wrap:wrap}
+.likert label{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;
+  flex:1;min-width:64px;padding:9px 4px;border:1px solid var(--border2);border-radius:10px;cursor:pointer;
+  text-transform:none;letter-spacing:0;color:var(--muted);font-weight:600;transition:all .15s;margin:0;text-align:center}
+.likert label:hover{border-color:var(--accent);background:rgba(168,85,247,.08)}
+.likert input{display:none}
+.likert label .lk-n{font-size:16px;font-weight:800}
+.likert label .lk-t{font-size:10px}
+.likert input:checked + .lk-box{}
+.likert label.sel{border-color:var(--accent);background:rgba(168,85,247,.2);color:var(--text);box-shadow:0 0 0 3px rgba(168,85,247,.12)}
+.q-item.missing .q-text{color:#fca5a5}
+.q-item.missing .likert label{border-color:rgba(239,68,68,.5)}
+.quiz-result{display:grid;grid-template-columns:1fr 1fr;gap:18px;align-items:start}
+@media(max-width:760px){.quiz-result{grid-template-columns:1fr}.quiz-progress{flex-wrap:wrap}}
+.score-row{display:flex;justify-content:space-between;align-items:center;padding:8px 0;border-bottom:1px solid var(--border2);font-size:13px}
+.score-row b{color:var(--accent2)}
+</style>
+</head>
+<body>
+<div class="blob blob1"></div><div class="blob blob2"></div><div class="blob blob3"></div>
+
+<div class="app">
+
+<!-- ============ Sidebar ============ -->
+<aside class="sidebar">
+  <div class="brand">智慧專題創作平台</div>
+  <div class="brand-sub">Mind Map → IPO → Python → PPT → Video Script</div>
+
+  <!-- 專題切換器 -->
+  <div style="margin:14px 0 18px;padding:10px;background:var(--surface2);border-radius:8px;border:1px solid var(--border2)">
+    <label style="margin-bottom:6px">📁 當前專題</label>
+    <select id="projectSwitcher" onchange="switchProject(this.value)" style="padding:8px 10px;font-size:13px">
+      <option value="default">預設專題</option>
+    </select>
+    <div style="display:flex;gap:6px;margin-top:8px">
+      <button class="sidebar-btn" style="margin:0;flex:1;padding:6px;font-size:11px" onclick="createNewProject()">+ 新增</button>
+      <button class="sidebar-btn" style="margin:0;flex:1;padding:6px;font-size:11px" onclick="renameProject()">重新命名</button>
+      <button class="sidebar-btn" style="margin:0;flex:1;padding:6px;font-size:11px;color:#fca5a5" onclick="deleteProject()">刪除</button>
+    </div>
+  </div>
+
+  <nav class="steps" id="stepNav">
+    <button class="step-item active" data-step="1" onclick="goStep(1)">
+      <div class="step-num">1</div>
+      <div class="step-info">
+        <div class="step-name">心智圖編輯</div>
+        <div class="step-desc">三分支 INPUT/PROCESS/OUTPUT</div>
+      </div>
+      <div class="step-check" id="check1"></div>
+    </button>
+    <button class="step-item" data-step="2" onclick="goStep(2)">
+      <div class="step-num">2</div>
+      <div class="step-info">
+        <div class="step-name">IPO 結構表</div>
+        <div class="step-desc">轉換為三模組表格</div>
+      </div>
+      <div class="step-check" id="check2"></div>
+    </button>
+    <button class="step-item" data-step="3" onclick="goStep(3)">
+      <div class="step-num">3</div>
+      <div class="step-info">
+        <div class="step-name">Python 程式碼</div>
+        <div class="step-desc">框架生成 + AI 優化</div>
+      </div>
+      <div class="step-check" id="check3"></div>
+    </button>
+    <button class="step-item" data-step="4" onclick="goStep(4)">
+      <div class="step-num">4</div>
+      <div class="step-info">
+        <div class="step-name">PPT 簡報</div>
+        <div class="step-desc">彙整三步生成 PPTX</div>
+      </div>
+      <div class="step-check" id="check4"></div>
+    </button>
+    <button class="step-item" data-step="5" onclick="goStep(5)">
+      <div class="step-num">5</div>
+      <div class="step-info">
+        <div class="step-name">影音腳本</div>
+        <div class="step-desc">起承轉合 + 旁白 + 字幕</div>
+      </div>
+      <div class="step-check" id="check5"></div>
+    </button>
+  </nav>
+
+  <div class="sidebar-section">
+    <h4>AI 後端設定</h4>
+    <div class="ai-status" id="aiStatus">
+      <span class="dot"></span><span id="aiStatusText">尚未設定</span>
+    </div>
+    <button class="sidebar-btn" onclick="openAISettings()">⚙ 設定 AI 金鑰</button>
+  </div>
+
+  <div class="sidebar-section">
+    <h4>專案管理</h4>
+    <button class="sidebar-btn" onclick="exportProject()">📤 匯出專案 JSON</button>
+    <button class="sidebar-btn" onclick="document.getElementById('importInput').click()">📥 匯入專案</button>
+    <input type="file" id="importInput" style="display:none" accept=".json" onchange="importProject(event)">
+    <button class="sidebar-btn" onclick="loadDemoData()">📚 載入示範資料</button>
+    <button class="sidebar-btn" onclick="openDashboard()">📊 學習儀表板</button>
+    <button class="sidebar-btn" onclick="clearAllData()" style="color:#fca5a5">🗑 清除所有資料</button>
+  </div>
+
+  <div class="sidebar-section">
+    <h4>學習資源</h4>
+    <button class="sidebar-btn" onclick="goStep(6)">📖 教學中心（影片＋PDF）</button>
+    <button class="sidebar-btn" onclick="goStep(7)">📝 學習後測問卷</button>
+  </div>
+
+  <div class="sidebar-section" style="font-size:10px;color:var(--dim);line-height:1.5">
+    整合自五大模組：心智圖→IPO 轉換、IPO 分析器、PPT 生成器、影音腳本生成器、AI CT 平台。所有資料儲存於瀏覽器本地。
+  </div>
+</aside>
+
+<!-- ============ Main ============ -->
+<main class="main">
+
+<!-- ===== Step 1: Mind Map ===== -->
+<section class="panel active" id="panel-1">
+  <header class="page-header">
+    <h1 class="page-title">① 心智圖編輯</h1>
+    <div class="page-sub">用三分支結構刻畫專題：輸入 → 處理 → 輸出。每行一個項目，越具體越好。</div>
+  </header>
+
+  <div class="card">
+    <div class="card-title">📋 專題基本資料</div>
+    <div class="field">
+      <label>專題名稱</label>
+      <input type="text" id="proj-title" placeholder="例：智慧農業 人機協作 績效評估系統">
+    </div>
+    <div class="field">
+      <label>專題描述（一兩句話說明此系統做什麼）</label>
+      <textarea id="proj-desc" placeholder="例：透過統計建模與模擬，量化分析人機協作模式在智慧農業情境下的工作效率與精準度。" style="min-height:60px"></textarea>
+    </div>
+  </div>
+
+  <div class="grid-3">
+    <div class="ipo-block" data-type="input">
+      <h5>📥 INPUT 輸入</h5>
+      <textarea id="branch-input" class="tall" placeholder="每行一項，例：&#10;土壤溼度感測器資料&#10;氣象站氣溫紀錄&#10;作業人員姓名與工時&#10;作物種類與面積"></textarea>
+    </div>
+    <div class="ipo-block" data-type="process">
+      <h5>⚙️ PROCESS 處理</h5>
+      <textarea id="branch-process" class="tall" placeholder="每行一項，例：&#10;資料清洗與遺漏值補值&#10;機器自動化作業時間統計&#10;人工作業時間統計&#10;統計顯著性檢定&#10;蒙地卡羅模擬"></textarea>
+    </div>
+    <div class="ipo-block" data-type="output">
+      <h5>📊 OUTPUT 輸出</h5>
+      <textarea id="branch-output" class="tall" placeholder="每行一項，例：&#10;人機協作效率指標&#10;成本節省百分比&#10;模擬報表&#10;視覺化長條圖&#10;改善建議"></textarea>
+    </div>
+  </div>
+
+  <div class="btn-row">
+    <button class="btn btn-primary" onclick="saveMindAndAdvance()">💾 儲存並進入下一步 →</button>
+    <button class="btn" onclick="saveMindOnly()">💾 僅儲存草稿</button>
+    <button class="btn btn-accent" onclick="aiEnrichMind()">✨ AI 補充建議</button>
+    <button class="btn btn-accent" onclick="aiReviewMind()">🔍 AI 審稿</button>
+    <button class="btn" onclick="renderMindmapTree()">🌳 樹狀視覺化</button>
+    <button class="btn" onclick="renderMermaidMind()">🧠 Mermaid 心智圖</button>
+  </div>
+
+  <!-- AI 審稿結果 -->
+  <div class="card" id="mindReviewCard" style="display:none">
+    <div class="card-title">🔍 AI 審稿建議</div>
+    <div id="mindReviewBody"></div>
+  </div>
+
+  <!-- 樹狀視覺化 -->
+  <div class="card" id="mindTreeCard" style="display:none">
+    <div class="card-title">🌳 樹狀心智圖</div>
+    <div class="card-desc">SVG 樹狀圖，可下載為 .svg 嵌入文件或簡報。</div>
+    <div id="mindTreeContainer" style="background:#fff;border-radius:10px;padding:20px;overflow:auto;max-height:600px"></div>
+    <div class="btn-row">
+      <button class="btn" onclick="downloadMindTreeSvg()">⬇ 下載 SVG</button>
+      <button class="btn" onclick="downloadMindTreePng()">⬇ 下載 PNG</button>
+    </div>
+  </div>
+
+  <!-- Mermaid 心智圖 -->
+  <div class="card" id="mermaidMindCard" style="display:none">
+    <div class="card-title">🧠 Mermaid 心智圖</div>
+    <div class="card-desc">標準 Mermaid 語法，可直接貼到 GitHub README、Notion、HackMD。</div>
+    <div id="mermaidMindContainer" style="background:#fff;border-radius:10px;padding:20px;text-align:center;min-height:200px"></div>
+    <label style="margin-top:14px">Mermaid 原始碼</label>
+    <textarea id="mermaidMindSource" class="tall" readonly style="font-size:12px"></textarea>
+    <div class="btn-row">
+      <button class="btn" onclick="copyToClipboard('mermaidMindSource')">📋 複製原始碼</button>
+      <button class="btn" onclick="downloadMermaidMd()">⬇ 下載 .md</button>
+    </div>
+  </div>
+</section>
+
+<!-- ===== Step 2: IPO Table ===== -->
+<section class="panel" id="panel-2">
+  <header class="page-header">
+    <h1 class="page-title">② IPO 結構表</h1>
+    <div class="page-sub">將心智圖整理為結構化表格。表格可直接編輯，加入更精細的描述。</div>
+  </header>
+
+  <div class="card">
+    <div class="card-title">🔄 結構表預覽</div>
+    <div class="card-desc">儲存格點擊即可編輯。新增或刪除列以調整粒度。</div>
+    <div style="overflow-x:auto">
+      <table class="ipo-table" id="ipoTable">
+        <thead>
+          <tr><th class="col-stage">階段</th><th>項目名稱</th><th>說明 / 備註</th><th style="width:60px"></th></tr>
+        </thead>
+        <tbody id="ipoTbody"></tbody>
+      </table>
+    </div>
+    <div class="btn-row">
+      <button class="btn" onclick="addIpoRow('input')">+ 新增 INPUT</button>
+      <button class="btn" onclick="addIpoRow('process')">+ 新增 PROCESS</button>
+      <button class="btn" onclick="addIpoRow('output')">+ 新增 OUTPUT</button>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-title">📤 IPO 匯出（Markdown）</div>
+    <div class="card-desc">直接複製到報告或部落格。也會用於後續 PPT 與影音腳本生成。</div>
+    <textarea id="ipoMarkdown" class="tall" readonly></textarea>
+    <div class="btn-row">
+      <button class="btn" onclick="copyToClipboard('ipoMarkdown')">📋 複製 Markdown</button>
+      <button class="btn" onclick="downloadIpoMarkdown()">⬇ 下載 .md</button>
+      <button class="btn" onclick="downloadIpoXlsx()">⬇ 下載 .xlsx</button>
+      <button class="btn" onclick="downloadIpoPdf()">⬇ 下載 .pdf</button>
+      <button class="btn" onclick="downloadIpoDocx()">⬇ 下載 .docx</button>
+      <button class="btn btn-accent" onclick="aiReviewIpo()">🔍 AI 邏輯審查</button>
+    </div>
+  </div>
+
+  <!-- AI IPO 審查結果 -->
+  <div class="card" id="ipoReviewCard" style="display:none">
+    <div class="card-title">🔍 AI 邏輯審查</div>
+    <div id="ipoReviewBody"></div>
+  </div>
+
+  <div class="nav-buttons">
+    <button class="btn btn-ghost" onclick="goStep(1)">← 回上一步</button>
+    <button class="btn btn-primary" onclick="saveIpoAndAdvance()">儲存並進入下一步 →</button>
+  </div>
+</section>
+
+<!-- ===== Step 3: Python Code ===== -->
+<section class="panel" id="panel-3">
+  <header class="page-header">
+    <h1 class="page-title">③ Python 程式碼</h1>
+    <div class="page-sub">基於 IPO 結構自動生成 Python 程式骨架。可選擇離線模板或 AI 智慧優化。</div>
+  </header>
+
+  <div class="card">
+    <div class="card-title">⚙️ 生成模式選擇</div>
+    <div class="grid-2">
+      <div class="field">
+        <label>生成方式</label>
+        <select id="codeMode">
+          <option value="template">📐 離線模板（即時，免金鑰）</option>
+          <option value="ai">🤖 AI 智慧生成（需 API 金鑰，含具體實作邏輯）</option>
+        </select>
+      </div>
+      <div class="field">
+        <label>程式語言</label>
+        <select id="codeLang">
+          <option value="python" selected>Python（建議）</option>
+          <option value="javascript">JavaScript</option>
+          <option value="java">Java</option>
+        </select>
+      </div>
+    </div>
+    <div class="field">
+      <label>額外提示（選填，給 AI 更具體的指引）</label>
+      <textarea id="codeHint" placeholder="例：使用 pandas 與 matplotlib，圖表必須支援繁體中文字型，使用 ipywidgets 做互動式輸入" style="min-height:70px"></textarea>
+    </div>
+    <button class="btn btn-primary" onclick="generateCode()">🚀 生成程式碼</button>
+  </div>
+
+  <div class="card" id="codeResultCard" style="display:none">
+    <div class="card-title">📝 生成結果</div>
+    <div class="tabs">
+      <button class="tab active" onclick="switchCodeTab(0,event)">完整程式碼</button>
+      <button class="tab" onclick="switchCodeTab(1,event)">INPUT 模組</button>
+      <button class="tab" onclick="switchCodeTab(2,event)">PROCESS 模組</button>
+      <button class="tab" onclick="switchCodeTab(3,event)">OUTPUT 模組</button>
+    </div>
+    <div class="tab-pane active" id="codePane-0"><pre class="code-box" id="codeFull"></pre></div>
+    <div class="tab-pane" id="codePane-1"><pre class="code-box" id="codeInput"></pre></div>
+    <div class="tab-pane" id="codePane-2"><pre class="code-box" id="codeProcess"></pre></div>
+    <div class="tab-pane" id="codePane-3"><pre class="code-box" id="codeOutput"></pre></div>
+    <div class="btn-row">
+      <button class="btn" onclick="copyCode()">📋 複製程式碼</button>
+      <button class="btn" onclick="downloadCode()">⬇ 下載 .py</button>
+      <button class="btn" onclick="downloadIpynb()">⬇ 下載 .ipynb</button>
+      <button class="btn btn-accent" onclick="aiReviewCode()">🐛 AI 找 Bug</button>
+      <button class="btn" onclick="openChartDemo()">📊 OUTPUT 圖表預覽</button>
+    </div>
+  </div>
+
+  <!-- AI Code 審查 -->
+  <div class="card" id="codeReviewCard" style="display:none">
+    <div class="card-title">🐛 AI 程式碼審查</div>
+    <div id="codeReviewBody"></div>
+  </div>
+
+  <!-- 圖表預覽 -->
+  <div class="card" id="chartDemoCard" style="display:none">
+    <div class="card-title">📊 OUTPUT 圖表即時預覽</div>
+    <div class="card-desc">為每個 OUTPUT 項目模擬資料，預覽長條圖、圓餅圖、折線圖效果。</div>
+    <div class="grid-2">
+      <div class="field">
+        <label>圖表類型</label>
+        <select id="chartType" onchange="renderDemoChart()">
+          <option value="bar">長條圖（比較類）</option>
+          <option value="pie">圓餅圖（比例類）</option>
+          <option value="line">折線圖（趨勢類）</option>
+          <option value="radar">雷達圖（多維評估）</option>
+        </select>
+      </div>
+      <div class="field">
+        <label>選擇 OUTPUT 項目</label>
+        <select id="chartOutput" onchange="renderDemoChart()"></select>
+      </div>
+    </div>
+    <div style="background:#fff;border-radius:10px;padding:16px;height:380px;position:relative">
+      <canvas id="demoChart"></canvas>
+    </div>
+    <div class="btn-row">
+      <button class="btn" onclick="downloadChartPng()">⬇ 下載 PNG</button>
+    </div>
+  </div>
+
+  <div class="nav-buttons">
+    <button class="btn btn-ghost" onclick="goStep(2)">← 回上一步</button>
+    <button class="btn btn-primary" onclick="saveCodeAndAdvance()">儲存並進入下一步 →</button>
+  </div>
+</section>
+
+<!-- ===== Step 4: PPT ===== -->
+<section class="panel" id="panel-4">
+  <header class="page-header">
+    <h1 class="page-title">④ PPT 簡報生成</h1>
+    <div class="page-sub">彙整前三步成果，自動生成 16:9 寬版簡報，含封面、目錄、心智圖、IPO 表、程式碼模組分析。</div>
+  </header>
+
+  <div class="card">
+    <div class="card-title">🎨 簡報設定</div>
+    <div class="grid-2">
+      <div class="field">
+        <label>佈景主題</label>
+        <select id="pptTheme">
+          <option value="academic">學術藍（沉穩專業）</option>
+          <option value="modern">現代紫（科技感）</option>
+          <option value="warm">溫暖橘（活潑教育）</option>
+          <option value="minimal">極簡灰（純淨）</option>
+        </select>
+      </div>
+      <div class="field">
+        <label>語言</label>
+        <select id="pptLang">
+          <option value="zh">繁體中文</option>
+          <option value="en">English</option>
+        </select>
+      </div>
+    </div>
+    <div class="field">
+      <label>作者 / 單位</label>
+      <input type="text" id="pptAuthor" placeholder="例：郭博仁 ｜ 中華電信數據通信分公司">
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-title">📋 大綱預覽</div>
+    <div class="card-desc">系統根據三步成果產出投影片大綱，你可以新增、刪除、調整順序。</div>
+    <ul id="outlinePreview" style="list-style:none;padding:0"></ul>
+  </div>
+
+  <div class="btn-row">
+    <button class="btn btn-primary" onclick="buildAndDownloadPPTX()">📊 生成並下載 PPTX</button>
+    <button class="btn" onclick="refreshOutline()">🔄 重新整理大綱</button>
+    <button class="btn btn-accent" onclick="aiScorePresentation()">⭐ AI 簡報評分</button>
+    <button class="btn btn-accent" onclick="openTranslateModal()">🌐 多語言翻譯</button>
+    <button class="btn btn-accent" onclick="openSpecCheckModal()">📋 規格合規檢查</button>
+  </div>
+
+  <!-- AI 評分結果 -->
+  <div class="card" id="pptScoreCard" style="display:none">
+    <div class="card-title">⭐ AI 簡報評分</div>
+    <div id="pptScoreBody"></div>
+  </div>
+
+  <div class="nav-buttons">
+    <button class="btn btn-ghost" onclick="goStep(3)">← 回上一步</button>
+    <button class="btn btn-primary" onclick="goStep(5)">進入下一步 →</button>
+  </div>
+</section>
+
+<!-- ===== Step 5: Video Script ===== -->
+<section class="panel" id="panel-5">
+  <header class="page-header">
+    <h1 class="page-title">⑤ 影音腳本與旁白</h1>
+    <div class="page-sub">起承轉合四幕結構，含旁白逐字稿、畫面建議、SRT/VTT 字幕、AI 影片生成提示語。</div>
+  </header>
+
+  <div class="card">
+    <div class="card-title">🎬 影片參數</div>
+    <div class="grid-3">
+      <div class="field">
+        <label>影片總長度（秒）</label>
+        <input type="number" id="vidLen" value="60" min="20" max="300">
+      </div>
+      <div class="field">
+        <label>目標受眾</label>
+        <select id="vidAud">
+          <option value="一般大眾">一般大眾</option>
+          <option value="專業人員">專業人員</option>
+          <option value="高中職學生">高中職學生</option>
+          <option value="大學生">大學生</option>
+          <option value="投資人">投資人</option>
+        </select>
+      </div>
+      <div class="field">
+        <label>影片風格</label>
+        <select id="vidStyle">
+          <option value="專業簡報">專業簡報</option>
+          <option value="活潑教學">活潑教學</option>
+          <option value="紀錄片">紀錄片</option>
+          <option value="廣告短片">廣告短片</option>
+        </select>
+      </div>
+    </div>
+    <div class="grid-3">
+      <div class="field"><label>起｜秒</label><input type="number" id="vidT1" value="10" min="5" max="60"></div>
+      <div class="field"><label>承｜秒</label><input type="number" id="vidT2" value="20" min="5" max="120"></div>
+      <div class="field"><label>轉｜秒</label><input type="number" id="vidT3" value="20" min="5" max="120"></div>
+    </div>
+    <button class="btn btn-primary" onclick="generateScript()">🎬 生成影音腳本（需 AI）</button>
+  </div>
+
+  <div class="card" id="scriptResultCard" style="display:none">
+    <div class="card-title">📖 生成結果</div>
+    <div class="tabs">
+      <button class="tab active" onclick="switchScriptTab(0,event)">🎬 影片腳本</button>
+      <button class="tab" onclick="switchScriptTab(1,event)">🎙 旁白逐字稿</button>
+      <button class="tab" onclick="switchScriptTab(2,event)">🎥 AI 影片提示</button>
+      <button class="tab" onclick="switchScriptTab(3,event)">📝 字幕檔</button>
+    </div>
+    <div class="tab-pane active" id="scriptPane-0"><div id="scriptOut"></div></div>
+    <div class="tab-pane" id="scriptPane-1"><div id="narrOut"></div></div>
+    <div class="tab-pane" id="scriptPane-2"><div id="promptOut"></div></div>
+    <div class="tab-pane" id="scriptPane-3">
+      <div class="alert alert-info">字幕檔可直接匯入剪映、Premiere、DaVinci Resolve 等剪輯軟體。</div>
+      <div class="grid-2">
+        <div>
+          <label>SRT 格式</label>
+          <textarea id="srtOut" class="tall" readonly style="min-height:300px;font-size:12px"></textarea>
+          <button class="btn" style="margin-top:8px" onclick="downloadSubtitle('srt')">⬇ 下載 .srt</button>
+        </div>
+        <div>
+          <label>VTT 格式</label>
+          <textarea id="vttOut" class="tall" readonly style="min-height:300px;font-size:12px"></textarea>
+          <button class="btn" style="margin-top:8px" onclick="downloadSubtitle('vtt')">⬇ 下載 .vtt</button>
+        </div>
+      </div>
+    </div>
+    <div class="btn-row">
+      <button class="btn" onclick="downloadScriptAll()">⬇ 下載完整腳本 .md</button>
+      <button class="btn" onclick="downloadScriptPdf()">⬇ 下載 PDF 腳本</button>
+      <button class="btn btn-accent" onclick="openTtsModal()">🔊 TTS 朗讀旁白</button>
+      <button class="btn btn-accent" onclick="openQrModal()">📱 生成 QR 碼</button>
+    </div>
+  </div>
+
+  <div class="nav-buttons">
+    <button class="btn btn-ghost" onclick="goStep(4)">← 回上一步</button>
+    <button class="btn btn-ok" onclick="finalExport()">🎉 完成！打包下載全部成果</button>
+  </div>
+</section>
+
+<!-- ===== 教學中心 Tutorial Center (panel-6) ===== -->
+<section class="panel" id="panel-6">
+  <header class="page-header">
+    <h1 class="page-title">📖 教學中心</h1>
+    <div class="page-sub">每個平台模組都配有影片教學與 PDF 講義。建議先看完對應模組的教學，再回到工作流程實作；完成後別忘了填寫學習後測問卷。</div>
+  </header>
+
+  <div class="card">
+    <div class="card-title">🎬 模組影音教學 ＋ 📄 PDF 講義</div>
+    <div class="card-desc">點選下方分頁切換四大模組的教學影片，並可線上預覽或下載 PDF 講義。</div>
+    <div class="tut-grid" id="tutGrid"><!-- JS 動態生成 --></div>
+  </div>
+
+  <div class="card">
+    <div class="card-title">📄 PDF 講義線上預覽</div>
+    <div class="card-desc">選擇模組後，可在此直接閱讀 PDF 講義（需先在程式碼上方 TUTORIALS 設定 pdf 連結）。</div>
+    <div class="btn-row" id="pdfTabs" style="margin-bottom:12px"></div>
+    <div id="pdfViewer"><div class="alert alert-info">尚未選擇講義，或對應 PDF 連結尚未設定。</div></div>
+  </div>
+
+  <div class="card">
+    <div class="card-title">📱 三大 QR 快速連結</div>
+    <div class="card-desc">提供給課堂、海報、講義掃描使用。可於程式碼上方 LINKS 區更新網址，再重新整理即可生成新 QR 碼。</div>
+    <div class="qr-grid" id="qrGrid"><!-- JS 動態生成 --></div>
+  </div>
+</section>
+
+<!-- ===== 學習後測問卷 Questionnaire (panel-7) ===== -->
+<section class="panel" id="panel-7">
+  <header class="page-header">
+    <h1 class="page-title">📝 學習後測問卷</h1>
+    <div class="page-sub">完成平台四大模組學習後填寫。共 8 構面、40 題，約需 8–10 分鐘。作答會自動暫存於瀏覽器，可隨時離開續填。</div>
+  </header>
+
+  <div class="quiz-progress">
+    <span class="pnum"><span id="quizDone">0</span> / <span id="quizTotal">40</span> 題</span>
+    <div class="bar"><i id="quizBar"></i></div>
+    <span class="pnum" id="quizPct">0%</span>
+  </div>
+
+  <div class="card">
+    <div id="quizForm"><!-- JS 動態生成 40 題 --></div>
+    <div class="nav-buttons" style="margin-top:8px">
+      <button class="btn btn-ghost" onclick="goStep(6)">← 回教學中心</button>
+      <div style="display:flex;gap:10px;flex-wrap:wrap">
+        <button class="btn" onclick="saveQuizDraft()">💾 暫存草稿</button>
+        <button class="btn btn-primary" onclick="submitQuiz()">✅ 送出並查看結果</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="card" id="quizResultCard" style="display:none">
+    <div class="card-title">📊 我的學習後測結果</div>
+    <div class="card-desc">以下為各構面平均分數與 4C 素養雷達圖（僅供自我檢視，正式統計請匯出後分析）。</div>
+    <div class="quiz-result">
+      <div>
+        <h4 style="font-size:13px;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;margin-bottom:8px">各構面平均（1–5）</h4>
+        <div id="quizScores"></div>
+      </div>
+      <div>
+        <h4 style="font-size:13px;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;margin-bottom:8px">4C 素養雷達圖</h4>
+        <canvas id="quiz4cRadar" height="260"></canvas>
+      </div>
+    </div>
+    <div class="btn-row" style="margin-top:18px">
+      <button class="btn" onclick="exportQuizCsv()">⬇ 下載作答 CSV</button>
+      <button class="btn" onclick="exportQuizJson()">⬇ 下載作答 JSON</button>
+      <button class="btn btn-accent" onclick="openSurveyLink()">🌐 前往線上問卷（Google）</button>
+    </div>
+  </div>
+</section>
+
+</main>
+</div>
+
+<!-- AI Settings Modal -->
+<div class="modal-backdrop" id="aiModal">
+  <div class="modal">
+    <button class="close-btn" onclick="closeModal('aiModal')">×</button>
+    <h3>⚙ AI 後端設定</h3>
+    <div class="alert alert-info">
+      支援 Google Gemini、Anthropic Claude、OpenAI 三家。金鑰僅儲存於瀏覽器本地，不會上傳任何伺服器。
+    </div>
+    <div class="field">
+      <label>選擇 AI 提供者</label>
+      <select id="aiProvider" onchange="updateAIModelHint()">
+        <option value="gemini">Google Gemini（免費額度大，推薦）</option>
+        <option value="anthropic">Anthropic Claude（最高品質）</option>
+        <option value="openai">OpenAI GPT</option>
+      </select>
+    </div>
+    <div class="field">
+      <label>API 金鑰</label>
+      <input type="password" id="aiApiKey" placeholder="貼上你的 API key">
+      <div id="aiKeyHint" style="font-size:11px;color:var(--muted);margin-top:6px"></div>
+    </div>
+    <div class="field">
+      <label>模型名稱</label>
+      <input type="text" id="aiModel" placeholder="留空使用預設">
+      <div id="aiModelHint" style="font-size:11px;color:var(--muted);margin-top:6px"></div>
+    </div>
+    <div class="btn-row">
+      <button class="btn btn-primary" onclick="saveAISettings()">💾 儲存設定</button>
+      <button class="btn" onclick="testAIConnection()">🧪 測試連線</button>
+    </div>
+  </div>
+</div>
+
+<!-- Translate Modal -->
+<div class="modal-backdrop" id="translateModal">
+  <div class="modal">
+    <button class="close-btn" onclick="closeModal('translateModal')">×</button>
+    <h3>🌐 多語言翻譯</h3>
+    <div class="alert alert-info">將心智圖、IPO 表、簡報大綱翻譯成其他語言。原始資料不變，產生翻譯版供匯出。</div>
+    <div class="field">
+      <label>翻譯目標語言</label>
+      <select id="translateLang">
+        <option value="en">英文 English</option>
+        <option value="ja">日文 日本語</option>
+        <option value="ko">韓文 한국어</option>
+        <option value="es">西班牙文 Español</option>
+        <option value="fr">法文 Français</option>
+        <option value="de">德文 Deutsch</option>
+        <option value="zh-CN">簡體中文</option>
+      </select>
+    </div>
+    <div class="field">
+      <label>翻譯範圍</label>
+      <div style="display:flex;flex-direction:column;gap:8px">
+        <label style="font-weight:normal;text-transform:none;letter-spacing:0"><input type="checkbox" id="trMind" checked> 心智圖（INPUT/PROCESS/OUTPUT）</label>
+        <label style="font-weight:normal;text-transform:none;letter-spacing:0"><input type="checkbox" id="trIpo" checked> IPO 結構表</label>
+        <label style="font-weight:normal;text-transform:none;letter-spacing:0"><input type="checkbox" id="trPpt" checked> 簡報大綱</label>
+        <label style="font-weight:normal;text-transform:none;letter-spacing:0"><input type="checkbox" id="trScript"> 影音腳本</label>
+      </div>
+    </div>
+    <div class="btn-row">
+      <button class="btn btn-primary" onclick="runTranslate()">🚀 開始翻譯</button>
+    </div>
+    <div id="translateResult" style="margin-top:14px"></div>
+  </div>
+</div>
+
+<!-- Spec Check Modal -->
+<div class="modal-backdrop" id="specModal">
+  <div class="modal" style="max-width:700px">
+    <button class="close-btn" onclick="closeModal('specModal')">×</button>
+    <h3>📋 規格合規檢查</h3>
+    <div class="field">
+      <label>檢查對象</label>
+      <select id="specTarget">
+        <option value="mdpi">MDPI Engineering Proceedings 論文摘要</option>
+        <option value="ieee">IEEE Conference Paper 摘要</option>
+        <option value="thesis">學位論文摘要（中文）</option>
+        <option value="grant">科技部專題計畫申請書</option>
+        <option value="patent">專利申請書摘要</option>
+      </select>
+    </div>
+    <div class="field">
+      <label>額外要求（選填）</label>
+      <textarea id="specExtra" placeholder="例：字數 200-300 字、要含關鍵字 IoT/AI/Smart Agriculture" style="min-height:60px"></textarea>
+    </div>
+    <div class="btn-row">
+      <button class="btn btn-primary" onclick="runSpecCheck()">🔍 執行檢查</button>
+    </div>
+    <div id="specResult" style="margin-top:14px;max-height:400px;overflow-y:auto"></div>
+  </div>
+</div>
+
+<!-- TTS Modal -->
+<div class="modal-backdrop" id="ttsModal">
+  <div class="modal">
+    <button class="close-btn" onclick="closeTtsModal()">×</button>
+    <h3>🔊 TTS 文字轉語音</h3>
+    <div class="alert alert-info">使用瀏覽器內建語音合成，免費無 API。可預聽旁白稿節奏。</div>
+    <div class="grid-2">
+      <div class="field">
+        <label>朗讀內容</label>
+        <select id="ttsSource" onchange="updateTtsPreview()">
+          <option value="narration">旁白逐字稿</option>
+          <option value="script">影片腳本</option>
+          <option value="desc">專題描述</option>
+        </select>
+      </div>
+      <div class="field">
+        <label>語音</label>
+        <select id="ttsVoice"></select>
+      </div>
+    </div>
+    <div class="grid-2">
+      <div class="field">
+        <label>語速 <span id="ttsRateVal">1.0</span></label>
+        <input type="range" id="ttsRate" min="0.5" max="2" step="0.1" value="1" oninput="document.getElementById('ttsRateVal').textContent=this.value">
+      </div>
+      <div class="field">
+        <label>音調 <span id="ttsPitchVal">1.0</span></label>
+        <input type="range" id="ttsPitch" min="0" max="2" step="0.1" value="1" oninput="document.getElementById('ttsPitchVal').textContent=this.value">
+      </div>
+    </div>
+    <textarea id="ttsText" class="tall" style="font-size:13px;min-height:140px" readonly></textarea>
+    <div class="btn-row">
+      <button class="btn btn-primary" id="ttsPlayBtn" onclick="ttsPlay()">▶ 播放</button>
+      <button class="btn" onclick="ttsPause()">⏸ 暫停</button>
+      <button class="btn" onclick="ttsStop()">⏹ 停止</button>
+    </div>
+  </div>
+</div>
+
+<!-- QR Code Modal -->
+<div class="modal-backdrop" id="qrModal">
+  <div class="modal">
+    <button class="close-btn" onclick="closeModal('qrModal')">×</button>
+    <h3>📱 QR 碼生成器</h3>
+    <div class="alert alert-info">在影片片尾、簡報結尾、海報上加 QR 碼，引導觀眾連結到專題網頁、GitHub、Demo。</div>
+    <div class="field">
+      <label>編碼內容（URL 或文字）</label>
+      <input type="text" id="qrText" placeholder="https://github.com/your-project">
+    </div>
+    <div class="grid-2">
+      <div class="field">
+        <label>尺寸（像素）</label>
+        <select id="qrSize">
+          <option value="256">256 × 256（小）</option>
+          <option value="512" selected>512 × 512（中）</option>
+          <option value="1024">1024 × 1024（大，列印用）</option>
+        </select>
+      </div>
+      <div class="field">
+        <label>容錯等級</label>
+        <select id="qrLevel">
+          <option value="L">L（7%）</option>
+          <option value="M" selected>M（15%）</option>
+          <option value="Q">Q（25%）</option>
+          <option value="H">H（30%，可加 LOGO）</option>
+        </select>
+      </div>
+    </div>
+    <div class="btn-row">
+      <button class="btn btn-primary" onclick="generateQr()">🚀 生成 QR 碼</button>
+    </div>
+    <div id="qrResult" style="margin-top:14px;text-align:center"></div>
+  </div>
+</div>
+
+<!-- Dashboard Modal -->
+<div class="modal-backdrop" id="dashModal">
+  <div class="modal" style="max-width:800px">
+    <button class="close-btn" onclick="closeModal('dashModal')">×</button>
+    <h3>📊 學習狀況儀表板</h3>
+    <div id="dashBody"></div>
+  </div>
+</div>
+
+<script>
+// ===================================================================
+// 智慧專題創作平台 — 整合核心邏輯
+// ===================================================================
+
+// ============ Global State ============
+const STORAGE_KEY = 'smartProjectPlatform_v1';
+const AI_KEY = 'smartProjectPlatform_ai_v1';
+
+let state = {
+  step: 1,
+  mind: {
+    title: '',
+    desc: '',
+    inputs: [],   // string[]
+    processes: [],
+    outputs: []
+  },
+  ipo: {
+    rows: []      // [{stage:'input'|'process'|'output', name, note}]
+  },
+  code: {
+    mode: 'template',
+    lang: 'python',
+    hint: '',
+    full: '',     // 完整程式碼
+    input: '',
+    process: '',
+    output: ''
+  },
+  ppt: {
+    theme: 'academic',
+    lang: 'zh',
+    author: '',
+    outline: []
+  },
+  video: {
+    len: 60, t1: 10, t2: 20, t3: 20,
+    aud: '一般大眾',
+    style: '專業簡報',
+    script: '',
+    narration: '',
+    prompts: '',
+    srt: '',
+    vtt: ''
+  },
+  completed: { 1: false, 2: false, 3: false, 4: false, 5: false },
+  quiz: { answers: {}, submittedAt: null }
+};
+
+let aiConfig = {
+  provider: 'gemini',
+  apiKey: '',
+  model: ''
+};
+
+const DEFAULT_MODELS = {
+  gemini: 'gemini-2.0-flash',
+  anthropic: 'claude-sonnet-4-5',
+  openai: 'gpt-4o-mini'
+};
+
+const KEY_HINTS = {
+  gemini: '至 <a href="https://aistudio.google.com/app/apikey" target="_blank" style="color:#a855f7">Google AI Studio</a> 取得（免費）',
+  anthropic: '至 <a href="https://console.anthropic.com/" target="_blank" style="color:#a855f7">Anthropic Console</a> 取得（需付費）',
+  openai: '至 <a href="https://platform.openai.com/api-keys" target="_blank" style="color:#a855f7">OpenAI Platform</a> 取得（需付費）'
+};
+
+// ============ Utilities ============
+const $ = sel => document.querySelector(sel);
+const $$ = sel => document.querySelectorAll(sel);
+
+function toast(msg, type='info'){
+  const t = document.createElement('div');
+  t.className = 'toast';
+  if(type==='ok') t.style.borderColor = 'var(--ok)';
+  if(type==='err') t.style.borderColor = 'var(--err)';
+  if(type==='warn') t.style.borderColor = 'var(--warn)';
+  t.textContent = msg;
+  document.body.appendChild(t);
+  setTimeout(()=>t.remove(), 3200);
+}
+
+function escapeHtml(s){
+  if(s==null) return '';
+  return String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+}
+
+function splitLines(s){
+  if(!s) return [];
+  return s.split(/\n+/).map(x=>x.trim()).filter(Boolean);
+}
+
+function fmtTime(sec){
+  const m = Math.floor(sec/60), s = sec%60;
+  return `${m}:${String(s).padStart(2,'0')}`;
+}
+
+function fmtSrtTime(sec){
+  const h = Math.floor(sec/3600);
+  const m = Math.floor((sec%3600)/60);
+  const s = Math.floor(sec%60);
+  const ms = Math.round((sec - Math.floor(sec)) * 1000);
+  return `${String(h).padStart(2,'0')}:${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')},${String(ms).padStart(3,'0')}`;
+}
+
+function fmtVttTime(sec){
+  return fmtSrtTime(sec).replace(',', '.');
+}
+
+function downloadBlob(content, filename, type='text/plain;charset=utf-8'){
+  const blob = content instanceof Blob ? content : new Blob([content], {type});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url; a.download = filename;
+  document.body.appendChild(a); a.click();
+  setTimeout(()=>{a.remove(); URL.revokeObjectURL(url);}, 200);
+}
+
+function copyToClipboard(elId){
+  const el = $('#'+elId);
+  if(!el) return;
+  navigator.clipboard.writeText(el.value || el.textContent).then(()=>toast('已複製到剪貼簿', 'ok'));
+}
+
+// ============ Persistence ============
+function saveState(){
+  try{
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+  }catch(e){ console.warn('Save failed', e); }
+}
+
+function loadState(){
+  try{
+    const raw = localStorage.getItem(STORAGE_KEY);
+    if(raw){
+      const loaded = JSON.parse(raw);
+      state = Object.assign(state, loaded);
+    }
+  }catch(e){ console.warn('Load failed', e); }
+}
+
+function loadAI(){
+  try{
+    const raw = localStorage.getItem(AI_KEY);
+    if(raw) aiConfig = Object.assign(aiConfig, JSON.parse(raw));
+  }catch(e){}
+}
+
+function saveAI(){
+  try{ localStorage.setItem(AI_KEY, JSON.stringify(aiConfig)); }catch(e){}
+}
+
+// ============ Step Navigation ============
+function goStep(n){
+  state.step = n;
+  $$('.step-item').forEach(b => {
+    const sn = parseInt(b.dataset.step);
+    b.classList.toggle('active', sn === n);
+    b.classList.toggle('done', state.completed[sn]);
+    const chk = b.querySelector('.step-check');
+    if(chk) chk.textContent = state.completed[sn] ? '✓' : '';
+  });
+  $$('.panel').forEach(p => p.classList.toggle('active', p.id === `panel-${n}`));
+  // Lazy render
+  if(n===2) renderIpoTable();
+  if(n===4) refreshOutline();
+  if(n===6) renderTutorialCenter();
+  if(n===7) buildQuiz();
+  saveState();
+  window.scrollTo({top:0, behavior:'smooth'});
+}
+
+function markComplete(n){
+  state.completed[n] = true;
+  saveState();
+}
+
+// ============ Step 1: Mind Map ============
+function readMindForm(){
+  state.mind.title = $('#proj-title').value.trim();
+  state.mind.desc = $('#proj-desc').value.trim();
+  state.mind.inputs = splitLines($('#branch-input').value);
+  state.mind.processes = splitLines($('#branch-process').value);
+  state.mind.outputs = splitLines($('#branch-output').value);
+}
+
+function writeMindForm(){
+  $('#proj-title').value = state.mind.title || '';
+  $('#proj-desc').value = state.mind.desc || '';
+  $('#branch-input').value = (state.mind.inputs || []).join('\n');
+  $('#branch-process').value = (state.mind.processes || []).join('\n');
+  $('#branch-output').value = (state.mind.outputs || []).join('\n');
+}
+
+function saveMindOnly(){
+  readMindForm();
+  saveState();
+  toast('草稿已儲存', 'ok');
+}
+
+function saveMindAndAdvance(){
+  readMindForm();
+  if(!state.mind.inputs.length || !state.mind.processes.length || !state.mind.outputs.length){
+    toast('請至少各填一項 INPUT / PROCESS / OUTPUT', 'warn');
+    return;
+  }
+  // Auto-build IPO rows from mind map
+  state.ipo.rows = [
+    ...state.mind.inputs.map(x=>({stage:'input', name:x, note:''})),
+    ...state.mind.processes.map(x=>({stage:'process', name:x, note:''})),
+    ...state.mind.outputs.map(x=>({stage:'output', name:x, note:''}))
+  ];
+  markComplete(1);
+  saveState();
+  goStep(2);
+  toast('心智圖已儲存，已自動轉換為 IPO 表', 'ok');
+}
+
+async function aiEnrichMind(){
+  readMindForm();
+  if(!state.mind.title){ toast('請先填寫專題名稱'); return; }
+  if(!aiConfig.apiKey){ toast('請先在側邊欄設定 AI 金鑰', 'warn'); openAISettings(); return; }
+  const btn = event.target;
+  btn.disabled = true;
+  btn.innerHTML = '<span class="spinner"></span> AI 生成中...';
+  try{
+    const prompt = `你是專題系統設計助手。學生提供以下專題資訊，請補充更具體的 INPUT/PROCESS/OUTPUT 項目（每類 3-6 項，繁體中文，每項一句具體描述）。
+
+專題名稱：${state.mind.title}
+專題描述：${state.mind.desc || '（未填）'}
+目前 INPUT：${state.mind.inputs.join('、') || '（空）'}
+目前 PROCESS：${state.mind.processes.join('、') || '（空）'}
+目前 OUTPUT：${state.mind.outputs.join('、') || '（空）'}
+
+嚴格按以下格式輸出（不要加任何說明），每行一個項目：
+
+[INPUT]
+項目1
+項目2
+...
+[/INPUT]
+
+[PROCESS]
+項目1
+項目2
+...
+[/PROCESS]
+
+[OUTPUT]
+項目1
+項目2
+...
+[/OUTPUT]`;
+    const result = await callAI('你是專題教學助手，請以繁體中文回應。', prompt, 1500);
+    const get = (tag)=>{
+      const m = result.match(new RegExp(`\\[${tag}\\]([\\s\\S]*?)\\[\\/${tag}\\]`));
+      return m ? splitLines(m[1]) : [];
+    };
+    const inI = get('INPUT'), inP = get('PROCESS'), inO = get('OUTPUT');
+    if(inI.length) $('#branch-input').value = inI.join('\n');
+    if(inP.length) $('#branch-process').value = inP.join('\n');
+    if(inO.length) $('#branch-output').value = inO.join('\n');
+    toast('AI 已補充建議內容', 'ok');
+  }catch(e){
+    toast('AI 呼叫失敗：'+e.message, 'err');
+  }finally{
+    btn.disabled = false;
+    btn.innerHTML = '✨ AI 補充建議';
+  }
+}
+
+// ============ Step 2: IPO Table ============
+function renderIpoTable(){
+  const tbody = $('#ipoTbody');
+  if(!tbody) return;
+  if(!state.ipo.rows || state.ipo.rows.length === 0){
+    // Try to rebuild from mind
+    if(state.mind.inputs.length){
+      state.ipo.rows = [
+        ...state.mind.inputs.map(x=>({stage:'input', name:x, note:''})),
+        ...state.mind.processes.map(x=>({stage:'process', name:x, note:''})),
+        ...state.mind.outputs.map(x=>({stage:'output', name:x, note:''}))
+      ];
+    }
+  }
+  const stageLabel = {input:'📥 INPUT', process:'⚙️ PROCESS', output:'📊 OUTPUT'};
+  tbody.innerHTML = state.ipo.rows.map((r, i)=>`
+    <tr data-idx="${i}">
+      <td class="col-stage ${r.stage}">${stageLabel[r.stage]}</td>
+      <td contenteditable="true" oninput="updateIpoCell(${i},'name',this.textContent)">${escapeHtml(r.name)}</td>
+      <td contenteditable="true" oninput="updateIpoCell(${i},'note',this.textContent)">${escapeHtml(r.note)}</td>
+      <td><button class="btn btn-ghost" style="padding:4px 10px;color:#fca5a5" onclick="removeIpoRow(${i})">×</button></td>
+    </tr>
+  `).join('');
+  updateIpoMarkdown();
+}
+
+function updateIpoCell(idx, field, val){
+  if(state.ipo.rows[idx]){
+    state.ipo.rows[idx][field] = val;
+    updateIpoMarkdown();
+  }
+}
+
+function addIpoRow(stage){
+  state.ipo.rows.push({stage, name:'新項目', note:''});
+  // Keep rows grouped by stage
+  state.ipo.rows.sort((a,b)=>{
+    const o = {input:0, process:1, output:2};
+    return o[a.stage] - o[b.stage];
+  });
+  renderIpoTable();
+}
+
+function removeIpoRow(idx){
+  state.ipo.rows.splice(idx, 1);
+  renderIpoTable();
+}
+
+function updateIpoMarkdown(){
+  const inputs = state.ipo.rows.filter(r=>r.stage==='input');
+  const procs = state.ipo.rows.filter(r=>r.stage==='process');
+  const outs = state.ipo.rows.filter(r=>r.stage==='output');
+  const fmt = (arr, head) => `## ${head}\n\n| 項目 | 說明 |\n|------|------|\n` +
+    arr.map(r=>`| ${r.name} | ${r.note||'-'} |`).join('\n');
+  const md = `# ${state.mind.title || '專題系統'} — IPO 結構分析\n\n` +
+    (state.mind.desc ? `> ${state.mind.desc}\n\n` : '') +
+    fmt(inputs, '📥 INPUT 輸入') + '\n\n' +
+    fmt(procs, '⚙️ PROCESS 處理') + '\n\n' +
+    fmt(outs, '📊 OUTPUT 輸出');
+  const ta = $('#ipoMarkdown');
+  if(ta) ta.value = md;
+}
+
+function downloadIpoMarkdown(){
+  updateIpoMarkdown();
+  const md = $('#ipoMarkdown').value;
+  const name = (state.mind.title || 'project').replace(/[^\w\u4e00-\u9fa5-]+/g, '_');
+  downloadBlob(md, `${name}_IPO.md`);
+}
+
+function downloadIpoXlsx(){
+  const data = [['階段', '項目', '說明']];
+  state.ipo.rows.forEach(r=>{
+    const lbl = {input:'INPUT', process:'PROCESS', output:'OUTPUT'}[r.stage];
+    data.push([lbl, r.name, r.note||'']);
+  });
+  const ws = XLSX.utils.aoa_to_sheet(data);
+  const wb = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb, ws, 'IPO');
+  const name = (state.mind.title || 'project').replace(/[^\w\u4e00-\u9fa5-]+/g, '_');
+  XLSX.writeFile(wb, `${name}_IPO.xlsx`);
+}
+
+function saveIpoAndAdvance(){
+  if(!state.ipo.rows.length){
+    toast('IPO 表為空', 'warn');
+    return;
+  }
+  markComplete(2);
+  saveState();
+  goStep(3);
+  toast('IPO 結構已儲存', 'ok');
+}
+
+// ============ Step 3: Python Code ============
+async function generateCode(){
+  const mode = $('#codeMode').value;
+  const lang = $('#codeLang').value;
+  const hint = $('#codeHint').value.trim();
+  state.code.mode = mode;
+  state.code.lang = lang;
+  state.code.hint = hint;
+
+  if(state.ipo.rows.length === 0){
+    toast('請先完成 IPO 結構表', 'warn');
+    return;
+  }
+
+  const btn = event.target;
+  btn.disabled = true;
+  btn.innerHTML = '<span class="spinner"></span> 生成中...';
+
+  try{
+    if(mode === 'template'){
+      const code = buildTemplateCode(lang);
+      state.code.full = code.full;
+      state.code.input = code.input;
+      state.code.process = code.process;
+      state.code.output = code.output;
+    } else {
+      if(!aiConfig.apiKey){
+        toast('AI 模式需要設定 API 金鑰', 'warn');
+        openAISettings();
+        return;
+      }
+      await generateCodeWithAI(lang, hint);
+    }
+    displayCode();
+    toast('程式碼生成完成', 'ok');
+  }catch(e){
+    toast('生成失敗：'+e.message, 'err');
+  }finally{
+    btn.disabled = false;
+    btn.innerHTML = '🚀 生成程式碼';
+  }
+}
+
+function buildTemplateCode(lang){
+  const inputs = state.ipo.rows.filter(r=>r.stage==='input');
+  const procs = state.ipo.rows.filter(r=>r.stage==='process');
+  const outs = state.ipo.rows.filter(r=>r.stage==='output');
+  const desc = state.mind.desc || state.mind.title || '專題系統';
+
+  if(lang === 'python'){
+    return buildPythonTemplate(desc, inputs, procs, outs);
+  } else if(lang === 'javascript'){
+    return buildJSTemplate(desc, inputs, procs, outs);
+  } else {
+    return buildJavaTemplate(desc, inputs, procs, outs);
+  }
+}
+
+function buildPythonTemplate(desc, inputs, procs, outs){
+  const inputCode = `# ============================================================
+# 📥 INPUT 模組：輸入條件與資料載入
+# ============================================================
+from dataclasses import dataclass
+from typing import Any, Dict, List
+import pandas as pd
+import numpy as np
+
+
+@dataclass
+class InputConfig:
+    """輸入參數配置 — 依 IPO 設計"""
+${inputs.map((x,i)=>`    field_${i+1}: Any = None  # ${x.name}${x.note?' — '+x.note:''}`).join('\n')}
+
+
+def load_input_data(config: InputConfig) -> pd.DataFrame:
+    """載入並驗證輸入資料
+
+    TODO: 學生需驗證資料完整性與型別
+    步驟：
+      1. 讀取資料來源（CSV/API/感測器）
+      2. 檢查缺失值
+      3. 型別轉換與正規化
+    """
+    raise NotImplementedError("請學生實作資料載入邏輯")
+`;
+
+  const processCode = `# ============================================================
+# ⚙️ PROCESS 模組：核心處理邏輯
+# ============================================================
+${procs.map((x,i)=>`def process_step_${i+1}(data: pd.DataFrame) -> pd.DataFrame:
+    """${x.name}${x.note?' — '+x.note:''}"""
+    # TODO: 學生實作此處理步驟
+    return data
+`).join('\n')}
+
+def run_pipeline(data: pd.DataFrame) -> pd.DataFrame:
+    """執行完整處理管線"""
+${procs.map((x,i)=>`    data = process_step_${i+1}(data)`).join('\n')}
+    return data
+`;
+
+  const outputCode = `# ============================================================
+# 📊 OUTPUT 模組：結果產出與視覺化
+# ============================================================
+# 中文字型設定（Colab 環境）
+# !apt-get -qq install fonts-noto-cjk
+import matplotlib.pyplot as plt
+from matplotlib import font_manager
+# font_manager.fontManager.addfont('/usr/share/fonts/opentype/noto/NotoSansCJK-Regular.ttc')
+plt.rcParams['font.sans-serif'] = ['Noto Sans CJK TC', 'Microsoft JhengHei', 'sans-serif']
+plt.rcParams['axes.unicode_minus'] = False
+
+${outs.map((x,i)=>`def generate_output_${i+1}(result: pd.DataFrame) -> Dict:
+    """${x.name}${x.note?' — '+x.note:''}"""
+    return {"status": "TODO", "data": None}
+`).join('\n')}
+`;
+
+  const mainCode = `# ============================================================
+# 🚀 主程式入口
+# ============================================================
+if __name__ == "__main__":
+    config = InputConfig(
+${inputs.map((x,i)=>`        field_${i+1}=None  # ${x.name}`).join(',\n')}
+    )
+    raw_data = load_input_data(config)
+    processed = run_pipeline(raw_data)
+${outs.map((x,i)=>`    output_${i+1} = generate_output_${i+1}(processed)`).join('\n')}
+
+    print("✓ Pipeline completed")
+`;
+
+  const header = `"""
+${desc}
+
+本程式碼由「智慧專題創作平台」依 IPO 結構自動生成框架。
+請依「先思考、後驗證」原則：學生負責驗證邏輯、補完細節、調整參數。
+"""
+
+`;
+
+  return {
+    full: header + inputCode + '\n\n' + processCode + '\n\n' + outputCode + '\n\n' + mainCode,
+    input: inputCode,
+    process: processCode,
+    output: outputCode
+  };
+}
+
+function buildJSTemplate(desc, inputs, procs, outs){
+  const full = `/**
+ * ${desc}
+ * AI 生成框架 — 請學生驗證並補完邏輯
+ */
+
+// 📥 INPUT
+class InputConfig {
+  constructor() {
+${inputs.map((x,i)=>`    this.field${i+1} = null; // ${x.name}`).join('\n')}
+  }
+}
+
+async function loadInputData(config) {
+  throw new Error('Not implemented — 請學生實作');
+}
+
+// ⚙️ PROCESS
+${procs.map((x,i)=>`async function processStep${i+1}(data) {
+  // ${x.name}
+  return data;
+}`).join('\n\n')}
+
+async function runPipeline(data) {
+${procs.map((x,i)=>`  data = await processStep${i+1}(data);`).join('\n')}
+  return data;
+}
+
+// 📊 OUTPUT
+${outs.map((x,i)=>`function generateOutput${i+1}(result) {
+  // ${x.name}
+  return { status: 'TODO' };
+}`).join('\n\n')}
+
+// 🚀 Main
+(async () => {
+  const config = new InputConfig();
+  const raw = await loadInputData(config);
+  const processed = await runPipeline(raw);
+${outs.map((x,i)=>`  const out${i+1} = generateOutput${i+1}(processed);`).join('\n')}
+  console.log('✓ Pipeline completed');
+})();
+`;
+  return { full, input:'(JS 版本不分模組顯示)', process:'', output:'' };
+}
+
+function buildJavaTemplate(desc, inputs, procs, outs){
+  const full = `/**
+ * ${desc}
+ * AI 生成框架 — 請學生驗證並補完邏輯
+ */
+import java.util.*;
+
+public class Pipeline {
+    static class InputConfig {
+${inputs.map((x,i)=>`        Object field${i+1}; // ${x.name}`).join('\n')}
+    }
+
+    static List<Map<String,Object>> loadInputData(InputConfig config) {
+        throw new UnsupportedOperationException();
+    }
+
+${procs.map((x,i)=>`    static List<Map<String,Object>> processStep${i+1}(List<Map<String,Object>> data) {
+        // ${x.name}
+        return data;
+    }`).join('\n\n')}
+
+${outs.map((x,i)=>`    static Map<String,Object> generateOutput${i+1}(List<Map<String,Object>> data) {
+        // ${x.name}
+        return new HashMap<>();
+    }`).join('\n\n')}
+
+    public static void main(String[] args) {
+        InputConfig config = new InputConfig();
+        var raw = loadInputData(config);
+        var processed = raw;
+${procs.map((x,i)=>`        processed = processStep${i+1}(processed);`).join('\n')}
+${outs.map((x,i)=>`        var out${i+1} = generateOutput${i+1}(processed);`).join('\n')}
+        System.out.println("✓ Pipeline completed");
+    }
+}
+`;
+  return { full, input:'(Java 版本不分模組顯示)', process:'', output:'' };
+}
+
+async function generateCodeWithAI(lang, hint){
+  const ipoText = state.ipo.rows.map(r=>{
+    const lbl = {input:'INPUT', process:'PROCESS', output:'OUTPUT'}[r.stage];
+    return `[${lbl}] ${r.name}${r.note?' — '+r.note:''}`;
+  }).join('\n');
+
+  const sys = `你是專題系統程式設計專家。學生提供 IPO 結構規格，你需要生成完整、可執行的 ${lang} 程式碼。`;
+
+  const langInstr = lang === 'python'
+    ? `生成 Python 程式碼，使用 pandas / numpy / matplotlib。OUTPUT 必須含中文字型設定（plt.rcParams['font.sans-serif']）。每個 function 含 docstring。`
+    : lang === 'javascript'
+    ? `生成現代 JavaScript（ES6+），使用 async/await，含完整 JSDoc。`
+    : `生成 Java 17+ 程式碼，含 Javadoc。`;
+
+  const prompt = `專題：${state.mind.title || '專題系統'}
+描述：${state.mind.desc || '（未填）'}
+${hint ? '額外要求：' + hint + '\n' : ''}
+IPO 規格：
+${ipoText}
+
+${langInstr}
+
+嚴格按以下格式輸出（不要加任何前言後語，不要 markdown 程式碼框，標籤名稱完全一致）：
+
+[INPUT_CODE]
+（INPUT 模組的完整程式碼）
+[/INPUT_CODE]
+
+[PROCESS_CODE]
+（PROCESS 模組的完整程式碼）
+[/PROCESS_CODE]
+
+[OUTPUT_CODE]
+（OUTPUT 模組的完整程式碼）
+[/OUTPUT_CODE]
+
+[MAIN_CODE]
+（主程式入口）
+[/MAIN_CODE]`;
+
+  const result = await callAI(sys, prompt, 6000);
+  const get = (tag)=>{
+    const m = result.match(new RegExp(`\\[${tag}\\]\\s*([\\s\\S]*?)\\s*\\[\\/${tag}\\]`));
+    return m ? m[1].trim() : '';
+  };
+  const ic = get('INPUT_CODE');
+  const pc = get('PROCESS_CODE');
+  const oc = get('OUTPUT_CODE');
+  const mc = get('MAIN_CODE');
+  state.code.input = ic;
+  state.code.process = pc;
+  state.code.output = oc;
+  state.code.full = `"""\n${state.mind.title || '專題系統'}\n${state.mind.desc || ''}\n\n本程式碼由智慧專題創作平台 AI 生成。\n"""\n\n` +
+    ic + '\n\n' + pc + '\n\n' + oc + '\n\n' + mc;
+}
+
+function pyHighlight(code){
+  let s = escapeHtml(code);
+  s = s.replace(/(#[^\n]*)/g, '<span class="com">$1</span>');
+  s = s.replace(/("""[\s\S]*?"""|'''[\s\S]*?''')/g, '<span class="com">$1</span>');
+  s = s.replace(/("(?:[^"\\\n]|\\.)*"|'(?:[^'\\\n]|\\.)*')/g, '<span class="str">$1</span>');
+  s = s.replace(/\b(import|from|def|class|if|else|elif|return|raise|with|as|try|except|for|in|while|pass|None|True|False|self|async|await|yield|lambda|not|and|or|is|in)\b/g, '<span class="kw">$1</span>');
+  s = s.replace(/\b(\d+\.?\d*)\b/g, '<span class="num">$1</span>');
+  return s;
+}
+
+function displayCode(){
+  $('#codeFull').innerHTML = pyHighlight(state.code.full);
+  $('#codeInput').innerHTML = pyHighlight(state.code.input);
+  $('#codeProcess').innerHTML = pyHighlight(state.code.process);
+  $('#codeOutput').innerHTML = pyHighlight(state.code.output);
+  $('#codeResultCard').style.display = '';
+}
+
+function switchCodeTab(idx, evt){
+  $$('#panel-3 .tab').forEach((t,i)=>t.classList.toggle('active', i===idx));
+  $$('#panel-3 .tab-pane').forEach((p,i)=>p.classList.toggle('active', i===idx));
+}
+
+function copyCode(){
+  navigator.clipboard.writeText(state.code.full).then(()=>toast('程式碼已複製', 'ok'));
+}
+
+function downloadCode(){
+  const ext = state.code.lang === 'python' ? 'py' : state.code.lang === 'javascript' ? 'js' : 'java';
+  const name = (state.mind.title || 'project').replace(/[^\w\u4e00-\u9fa5-]+/g, '_');
+  downloadBlob(state.code.full, `${name}.${ext}`);
+}
+
+function downloadIpynb(){
+  if(state.code.lang !== 'python'){
+    toast('.ipynb 僅支援 Python', 'warn');
+    return;
+  }
+  const cells = [];
+  cells.push({
+    cell_type: 'markdown',
+    metadata: {},
+    source: [`# ${state.mind.title || '專題系統'}\n`, `\n${state.mind.desc || ''}\n`]
+  });
+  const splitToLines = (s)=>{
+    const lines = s.split('\n');
+    return lines.map((l,i)=> i === lines.length-1 ? l : l + '\n');
+  };
+  // INPUT cell
+  if(state.code.input){
+    cells.push({cell_type:'markdown', metadata:{}, source:['## 📥 INPUT 模組']});
+    cells.push({cell_type:'code', metadata:{}, execution_count:null, outputs:[], source: splitToLines(state.code.input)});
+  }
+  if(state.code.process){
+    cells.push({cell_type:'markdown', metadata:{}, source:['## ⚙️ PROCESS 模組']});
+    cells.push({cell_type:'code', metadata:{}, execution_count:null, outputs:[], source: splitToLines(state.code.process)});
+  }
+  if(state.code.output){
+    cells.push({cell_type:'markdown', metadata:{}, source:['## 📊 OUTPUT 模組']});
+    cells.push({cell_type:'code', metadata:{}, execution_count:null, outputs:[], source: splitToLines(state.code.output)});
+  }
+  const ipynb = {
+    cells,
+    metadata: {
+      kernelspec: { display_name:'Python 3', language:'python', name:'python3' },
+      language_info: { name:'python', version:'3.x' }
+    },
+    nbformat: 4,
+    nbformat_minor: 5
+  };
+  const name = (state.mind.title || 'project').replace(/[^\w\u4e00-\u9fa5-]+/g, '_');
+  downloadBlob(JSON.stringify(ipynb, null, 2), `${name}.ipynb`, 'application/json');
+}
+
+function saveCodeAndAdvance(){
+  if(!state.code.full){
+    toast('請先生成程式碼', 'warn');
+    return;
+  }
+  markComplete(3);
+  saveState();
+  goStep(4);
+  toast('程式碼已儲存', 'ok');
+}
+
+// ============ Step 4: PPT ============
+const PPT_THEMES = {
+  academic: { bg:'F8FAFC', title:'1E3A8A', body:'334155', accent:'3B82F6', font:'Microsoft JhengHei' },
+  modern:   { bg:'0F172A', title:'F1F5F9', body:'CBD5E1', accent:'A855F7', font:'Microsoft JhengHei' },
+  warm:     { bg:'FFFBEB', title:'9A3412', body:'78350F', accent:'F59E0B', font:'Microsoft JhengHei' },
+  minimal:  { bg:'FFFFFF', title:'1F2937', body:'4B5563', accent:'6B7280', font:'Microsoft JhengHei' }
+};
+
+function refreshOutline(){
+  state.ppt.theme = $('#pptTheme').value;
+  state.ppt.lang = $('#pptLang').value;
+  state.ppt.author = $('#pptAuthor').value;
+
+  const outline = [];
+  const title = state.mind.title || '專題系統';
+  outline.push({ slot:'cover', title: title });
+  outline.push({ slot:'agenda', title: state.ppt.lang === 'zh' ? '簡報大綱' : 'Agenda' });
+  outline.push({ slot:'intro', title: state.ppt.lang === 'zh' ? '專題介紹' : 'Introduction' });
+  outline.push({ slot:'mindmap', title: state.ppt.lang === 'zh' ? '心智圖架構' : 'Mind Map' });
+  // IPO: split by stage
+  outline.push({ slot:'ipo', stage:'input', title: state.ppt.lang === 'zh' ? '📥 INPUT 輸入模組' : '📥 INPUT Module' });
+  outline.push({ slot:'ipo', stage:'process', title: state.ppt.lang === 'zh' ? '⚙️ PROCESS 處理模組' : '⚙️ PROCESS Module' });
+  outline.push({ slot:'ipo', stage:'output', title: state.ppt.lang === 'zh' ? '📊 OUTPUT 輸出模組' : '📊 OUTPUT Module' });
+  // Code modules
+  if(state.code.input) outline.push({ slot:'code', kind:'input', title: state.ppt.lang === 'zh' ? 'INPUT 程式實作' : 'INPUT Code' });
+  if(state.code.process) outline.push({ slot:'code', kind:'process', title: state.ppt.lang === 'zh' ? 'PROCESS 程式實作' : 'PROCESS Code' });
+  if(state.code.output) outline.push({ slot:'code', kind:'output', title: state.ppt.lang === 'zh' ? 'OUTPUT 程式實作' : 'OUTPUT Code' });
+  outline.push({ slot:'thanks', title: state.ppt.lang === 'zh' ? '感謝聆聽' : 'Thank You' });
+
+  state.ppt.outline = outline;
+  const ul = $('#outlinePreview');
+  if(ul){
+    ul.innerHTML = outline.map((s, i)=>`
+      <li style="padding:10px 14px;margin-bottom:6px;background:var(--surface2);border-radius:8px;border-left:3px solid var(--accent);display:flex;align-items:center;gap:10px">
+        <span style="color:var(--muted);font-size:12px;width:24px">${i+1}.</span>
+        <span style="flex:1">${escapeHtml(s.title)}</span>
+        <span class="chip">${s.slot}</span>
+      </li>
+    `).join('');
+  }
+}
+
+async function buildAndDownloadPPTX(){
+  refreshOutline();
+  const btn = event.target;
+  btn.disabled = true;
+  btn.innerHTML = '<span class="spinner"></span> 生成中...';
+  try{
+    const pres = new PptxGenJS();
+    pres.layout = 'LAYOUT_WIDE';
+    pres.title = state.mind.title || 'Presentation';
+    pres.author = state.ppt.author || (state.ppt.lang === 'zh' ? '智慧專題創作平台' : 'Smart Project Platform');
+    const theme = PPT_THEMES[state.ppt.theme] || PPT_THEMES.academic;
+    const isZh = state.ppt.lang === 'zh';
+    const total = state.ppt.outline.length;
+    const dateStr = new Date().toLocaleDateString(isZh?'zh-TW':'en-US');
+    const footerText = `${state.mind.title || 'Presentation'} · ${dateStr}`;
+
+    function decorate(slide, idx){
+      slide.background = { color: theme.bg };
+      slide.addShape(pres.ShapeType.rect, { x:0, y:0, w:13.333, h:0.12, fill:{color:theme.accent}, line:{color:theme.accent} });
+      if(idx > 0){
+        slide.addText(`${idx+1} / ${total}`, { x:12.4, y:7.15, w:0.8, h:0.3, fontSize:9, color:theme.body, fontFace:theme.font, align:'right' });
+        slide.addText(footerText, { x:0.4, y:7.15, w:11.5, h:0.3, fontSize:9, color:theme.body, fontFace:theme.font });
+      }
+    }
+    function titleBar(slide, title){
+      slide.addText(title, { x:0.5, y:0.4, w:12.3, h:0.9, fontSize:26, bold:true, color:theme.title, fontFace:theme.font });
+      slide.addShape(pres.ShapeType.rect, { x:0.5, y:1.3, w:1.5, h:0.06, fill:{color:theme.accent}, line:{color:theme.accent} });
+    }
+
+    for(let i = 0; i < total; i++){
+      const meta = state.ppt.outline[i];
+      const slide = pres.addSlide();
+      decorate(slide, i);
+
+      if(meta.slot === 'cover'){
+        slide.addText(meta.title, { x:0.6, y:2.3, w:12.1, h:1.8, fontSize:42, bold:true, color:theme.title, fontFace:theme.font, align:'center', valign:'middle' });
+        if(state.mind.desc){
+          slide.addText(state.mind.desc, { x:0.6, y:4.3, w:12.1, h:1.4, fontSize:16, color:theme.body, fontFace:theme.font, align:'center' });
+        }
+        const author = state.ppt.author || '';
+        if(author){
+          slide.addText(author, { x:0.6, y:5.8, w:12.1, h:0.5, fontSize:14, color:theme.accent, fontFace:theme.font, align:'center', italic:true });
+        }
+        slide.addText(dateStr, { x:0.6, y:6.4, w:12.1, h:0.4, fontSize:12, color:theme.body, fontFace:theme.font, align:'center' });
+
+      } else if(meta.slot === 'agenda'){
+        titleBar(slide, meta.title);
+        const items = state.ppt.outline.slice(2).filter(s=>s.slot!=='thanks').map((s,n)=>`${n+1}. ${s.title}`);
+        slide.addText(items.join('\n'), { x:0.7, y:1.7, w:12.0, h:5.0, fontSize: items.length > 10 ? 14 : 18, color:theme.body, fontFace:theme.font, valign:'top', paraSpaceAfter:6 });
+
+      } else if(meta.slot === 'intro'){
+        titleBar(slide, meta.title);
+        const lines = [];
+        if(state.mind.title) lines.push((isZh?'專題名稱：':'Title: ') + state.mind.title);
+        if(state.mind.desc) lines.push('');
+        if(state.mind.desc) lines.push(state.mind.desc);
+        lines.push('');
+        lines.push(isZh ? `本系統採用 IPO 結構化設計，包含 ${state.ipo.rows.filter(r=>r.stage==='input').length} 項輸入、${state.ipo.rows.filter(r=>r.stage==='process').length} 項處理、${state.ipo.rows.filter(r=>r.stage==='output').length} 項輸出。`
+                       : `This system follows IPO design: ${state.ipo.rows.filter(r=>r.stage==='input').length} inputs, ${state.ipo.rows.filter(r=>r.stage==='process').length} processes, ${state.ipo.rows.filter(r=>r.stage==='output').length} outputs.`);
+        slide.addText(lines.join('\n'), { x:0.7, y:1.7, w:12.0, h:5.0, fontSize:16, color:theme.body, fontFace:theme.font, valign:'top', paraSpaceAfter:8 });
+
+      } else if(meta.slot === 'mindmap'){
+        titleBar(slide, meta.title);
+        // 3 column layout
+        const cols = [
+          {title:'📥 INPUT', items:state.mind.inputs, color:'3B82F6'},
+          {title:'⚙️ PROCESS', items:state.mind.processes, color:'A855F7'},
+          {title:'📊 OUTPUT', items:state.mind.outputs, color:'EC4899'}
+        ];
+        cols.forEach((c, idx)=>{
+          const x = 0.5 + idx * 4.2;
+          slide.addShape(pres.ShapeType.roundRect, { x:x, y:1.7, w:4.0, h:5.3, fill:{color:'FFFFFF', transparency:80}, line:{color:c.color, width:2}, rectRadius:0.1 });
+          slide.addText(c.title, { x:x, y:1.85, w:4.0, h:0.5, fontSize:16, bold:true, color:c.color, fontFace:theme.font, align:'center' });
+          const txt = (c.items||[]).map(s=>'• '+s).join('\n');
+          slide.addText(txt, { x:x+0.2, y:2.4, w:3.6, h:4.5, fontSize:12, color:theme.body, fontFace:theme.font, valign:'top', paraSpaceAfter:4 });
+        });
+
+      } else if(meta.slot === 'ipo'){
+        titleBar(slide, meta.title);
+        const rows = state.ipo.rows.filter(r=>r.stage===meta.stage);
+        if(rows.length){
+          const tableData = [
+            [{text: isZh?'項目':'Item', options:{bold:true,fill:{color:theme.accent},color:'FFFFFF'}}, {text: isZh?'說明':'Description', options:{bold:true,fill:{color:theme.accent},color:'FFFFFF'}}]
+          ];
+          rows.forEach(r=> tableData.push([r.name, r.note || '-']));
+          slide.addTable(tableData, {
+            x:0.5, y:1.7, w:12.3, h:5.0,
+            fontSize:13, color:theme.body, fontFace:theme.font,
+            border:{type:'solid', color:'CCCCCC', pt:0.5},
+            colW:[3.5, 8.8]
+          });
+        } else {
+          slide.addText(isZh?'（無資料）':'(No data)', { x:0.7, y:3, w:12, h:1, fontSize:18, color:theme.body, fontFace:theme.font, align:'center' });
+        }
+
+      } else if(meta.slot === 'code'){
+        titleBar(slide, meta.title);
+        const codeText = state.code[meta.kind] || '';
+        const lines = codeText.split('\n').slice(0, 28); // limit to fit
+        slide.addText(lines.join('\n'), {
+          x:0.5, y:1.6, w:12.3, h:5.4,
+          fontSize:10, fontFace:'Courier New', color:theme.body,
+          fill:{color:'F1F5F9'}, valign:'top', paraSpaceAfter:0
+        });
+
+      } else if(meta.slot === 'thanks'){
+        slide.addText(meta.title, { x:0.6, y:2.8, w:12.1, h:1.6, fontSize:48, bold:true, color:theme.title, fontFace:theme.font, align:'center', valign:'middle' });
+        slide.addText(state.ppt.author || '', { x:0.6, y:4.5, w:12.1, h:0.6, fontSize:18, color:theme.body, fontFace:theme.font, align:'center' });
+        slide.addText(isZh?'感謝您的聆聽 與 指導':'Thank you for your attention', { x:0.6, y:5.3, w:12.1, h:0.5, fontSize:14, color:theme.accent, fontFace:theme.font, align:'center', italic:true });
+      }
+    }
+
+    const name = (state.mind.title || 'project').replace(/[^\w\u4e00-\u9fa5-]+/g, '_');
+    await pres.writeFile({ fileName: `${name}.pptx` });
+    markComplete(4);
+    saveState();
+    toast('PPTX 已下載', 'ok');
+  }catch(e){
+    console.error(e);
+    toast('PPT 生成失敗：'+e.message, 'err');
+  }finally{
+    btn.disabled = false;
+    btn.innerHTML = '📊 生成並下載 PPTX';
+  }
+}
+
+// ============ Step 5: Video Script ============
+async function generateScript(){
+  const len = parseInt($('#vidLen').value) || 60;
+  const t1 = parseInt($('#vidT1').value) || 10;
+  const t2 = parseInt($('#vidT2').value) || 20;
+  const t3 = parseInt($('#vidT3').value) || 20;
+  const t4 = len - t1 - t2 - t3;
+  if(t4 < 5){ toast('起承轉時長超出影片總長，請調整', 'warn'); return; }
+
+  state.video.len = len;
+  state.video.t1 = t1; state.video.t2 = t2; state.video.t3 = t3;
+  state.video.aud = $('#vidAud').value;
+  state.video.style = $('#vidStyle').value;
+
+  if(!aiConfig.apiKey){
+    toast('影音腳本生成需要 AI，請先設定金鑰', 'warn');
+    openAISettings();
+    return;
+  }
+
+  const btn = event.target;
+  btn.disabled = true;
+  btn.innerHTML = '<span class="spinner"></span> 階段 1/3 生成腳本中...';
+
+  try{
+    const mindText = `INPUT：${state.mind.inputs.join('、')}\nPROCESS：${state.mind.processes.join('、')}\nOUTPUT：${state.mind.outputs.join('、')}`;
+    const ipoText = state.ipo.rows.map(r=>{
+      const lbl = {input:'I', process:'P', output:'O'}[r.stage];
+      return `[${lbl}] ${r.name}`;
+    }).join('\n');
+
+    const t = (a,b) => `${Math.floor(a/60)}:${String(a%60).padStart(2,'0')}-${Math.floor(b/60)}:${String(b%60).padStart(2,'0')}`;
+
+    // Phase 1: Script
+    const scriptPrompt = `你是專業教育影片編導。根據以下學生專題，生成起承轉合四幕影片腳本。
+
+專題：${state.mind.title || '專題系統'}
+描述：${state.mind.desc || ''}
+心智圖：${mindText}
+IPO 結構：
+${ipoText}
+程式重點：${state.code.full ? state.code.full.slice(0, 300) : '（無）'}
+
+影片總長 ${len} 秒，受眾「${state.video.aud}」，風格「${state.video.style}」。
+
+直接輸出以下四幕，不加前言說明：
+
+起（${t(0, t1)}）
+【旁白摘要】用一個尖銳問題或衝擊數字吸引注意，引發共鳴
+【畫面描述】建議對應的視覺畫面
+
+承（${t(t1, t1+t2)}）
+【旁白摘要】展示技術如何解決問題，引述 PROCESS 中的核心邏輯
+【畫面描述】建議對應的視覺畫面
+
+轉（${t(t1+t2, t1+t2+t3)}）
+【旁白摘要】真實使用情境，讓觀眾看到「有了它之後」的場景
+【畫面描述】建議對應的視覺畫面
+
+合（${t(t1+t2+t3, len)}）
+【旁白摘要】量化效益數字＋情感呼籲＋行動呼籲
+【畫面描述】建議對應的視覺畫面`;
+
+    const s1 = await callAI('你是專業中文影片編導', scriptPrompt, 1500);
+    state.video.script = s1;
+    renderScript(s1);
+
+    // Phase 2: Narration
+    btn.innerHTML = '<span class="spinner"></span> 階段 2/3 生成旁白中...';
+    const totalWords = Math.round(len * 4); // ~4 chars/sec
+    const narrPrompt = `你是專業中文旁白撰稿人。根據以下影片腳本，生成完整旁白逐字稿。
+
+腳本：
+${s1}
+
+規則：
+- 總字數約 ${totalWords} 字（${len} 秒影片）
+- 每段前加時間標記，格式：[0:00-0:10]
+- 口語中文，每句 ≤20 字，動詞開頭
+- 數字具體（說「提升 80%」不說「大幅提升」）
+- 直接輸出旁白，不加任何說明文字`;
+
+    const s2 = await callAI('你是專業中文旁白撰稿人', narrPrompt, 1500);
+    state.video.narration = s2;
+    renderNarration(s2);
+
+    // Phase 3: AI Video Prompts
+    btn.innerHTML = '<span class="spinner"></span> 階段 3/3 生成影片指令...';
+    const promptPrompt = `根據以下影片腳本，為每幕生成一個 AI 影片生成提示語（中文，60-80字，含主體/環境/動作/鏡頭/風格/光線六要素）。
+
+腳本：
+${s1}
+
+嚴格按以下格式輸出四行，不加任何說明：
+起→[提示語]
+承→[提示語]
+轉→[提示語]
+合→[提示語]`;
+
+    const s3 = await callAI('你是 AI 影片提示語專家', promptPrompt, 600);
+    state.video.prompts = s3;
+    renderPrompts(s3);
+
+    // Generate SRT/VTT from narration
+    generateSubtitles();
+
+    $('#scriptResultCard').style.display = '';
+    markComplete(5);
+    saveState();
+    toast('影音腳本生成完成！', 'ok');
+  }catch(e){
+    console.error(e);
+    toast('腳本生成失敗：'+e.message, 'err');
+  }finally{
+    btn.disabled = false;
+    btn.innerHTML = '🎬 生成影音腳本（需 AI）';
+  }
+}
+
+function renderScript(text){
+  const stages = parseScriptStages(text);
+  const stageNames = ['起','承','轉','合'];
+  const stageCss = ['qi','cheng','zhuan','he'];
+  const html = stages.map((seg, i)=>`
+    <div class="script-block">
+      <span class="stage ${stageCss[i]||'qi'}">${stageNames[i]||''}</span>
+      <span class="time">${escapeHtml(seg.time)}</span>
+      <div class="narr"><strong>旁白摘要：</strong>${escapeHtml(seg.narr)}</div>
+      <div class="visual">🎥 畫面：${escapeHtml(seg.visual)}</div>
+    </div>
+  `).join('');
+  $('#scriptOut').innerHTML = html || `<pre class="code-box">${escapeHtml(text)}</pre>`;
+}
+
+function parseScriptStages(text){
+  const stages = [];
+  const re = /(起|承|轉|合)\s*[（(]([^）)]+)[）)][\s\S]*?【旁白摘要】([\s\S]*?)【畫面描述】([\s\S]*?)(?=(?:起|承|轉|合)\s*[（(]|$)/g;
+  let m;
+  while((m = re.exec(text)) !== null){
+    stages.push({ name:m[1], time:m[2].trim(), narr:m[3].trim(), visual:m[4].trim() });
+  }
+  return stages;
+}
+
+function renderNarration(text){
+  const lines = text.split('\n').filter(l=>l.trim());
+  const html = lines.map(l=>{
+    const m = l.match(/^\[([^\]]+)\]\s*(.*)$/);
+    if(m){
+      return `<div class="script-block"><span class="time">[${escapeHtml(m[1])}]</span><div class="narr">${escapeHtml(m[2])}</div></div>`;
+    }
+    return `<div class="script-block"><div class="narr">${escapeHtml(l)}</div></div>`;
+  }).join('');
+  $('#narrOut').innerHTML = html;
+}
+
+function renderPrompts(text){
+  const lines = text.split('\n').filter(l=>l.trim());
+  const html = lines.map(l=>`<div class="script-block"><div class="narr">${escapeHtml(l)}</div></div>`).join('');
+  $('#promptOut').innerHTML = html;
+}
+
+function generateSubtitles(){
+  // Parse narration into timed segments
+  const lines = state.video.narration.split('\n').filter(l=>l.trim());
+  const segments = [];
+  lines.forEach(line=>{
+    const m = line.match(/^\[(\d+):(\d{2})-(\d+):(\d{2})\]\s*(.*)$/);
+    if(m){
+      const start = parseInt(m[1])*60 + parseInt(m[2]);
+      const end = parseInt(m[3])*60 + parseInt(m[4]);
+      const text = m[5];
+      // Break long text into ≤20 char chunks per subtitle
+      const chunks = chunkText(text, 18);
+      const per = (end - start) / chunks.length;
+      chunks.forEach((c, idx)=>{
+        segments.push({
+          start: start + idx * per,
+          end: start + (idx+1) * per,
+          text: c
+        });
+      });
+    }
+  });
+
+  // Build SRT
+  let srt = '';
+  segments.forEach((s, i)=>{
+    srt += `${i+1}\n${fmtSrtTime(s.start)} --> ${fmtSrtTime(s.end)}\n${s.text}\n\n`;
+  });
+  state.video.srt = srt;
+  $('#srtOut').value = srt;
+
+  // Build VTT
+  let vtt = 'WEBVTT\n\n';
+  segments.forEach((s, i)=>{
+    vtt += `${i+1}\n${fmtVttTime(s.start)} --> ${fmtVttTime(s.end)}\n${s.text}\n\n`;
+  });
+  state.video.vtt = vtt;
+  $('#vttOut').value = vtt;
+}
+
+function chunkText(text, maxLen){
+  if(!text) return [];
+  const result = [];
+  let cur = '';
+  // Split by punctuation first
+  const parts = text.split(/([，。！？、；：])/);
+  for(let i = 0; i < parts.length; i++){
+    const part = parts[i];
+    if((cur + part).length > maxLen && cur){
+      result.push(cur);
+      cur = part;
+    } else {
+      cur += part;
+    }
+  }
+  if(cur.trim()) result.push(cur.trim());
+  return result.length ? result : [text];
+}
+
+function switchScriptTab(idx, evt){
+  $$('#panel-5 .tab').forEach((t,i)=>t.classList.toggle('active', i===idx));
+  $$('#panel-5 .tab-pane').forEach((p,i)=>p.classList.toggle('active', i===idx));
+}
+
+function downloadSubtitle(fmt){
+  const content = fmt === 'srt' ? state.video.srt : state.video.vtt;
+  const name = (state.mind.title || 'project').replace(/[^\w\u4e00-\u9fa5-]+/g, '_');
+  downloadBlob(content, `${name}.${fmt}`);
+}
+
+function downloadScriptAll(){
+  const md = `# ${state.mind.title || '專題'} — 影音腳本
+
+## 🎬 影片腳本（起承轉合）
+
+${state.video.script}
+
+## 🎙 旁白逐字稿
+
+${state.video.narration}
+
+## 🎥 AI 影片生成提示
+
+${state.video.prompts}
+
+---
+影片參數：${state.video.len}秒 / 受眾「${state.video.aud}」/ 風格「${state.video.style}」
+`;
+  const name = (state.mind.title || 'project').replace(/[^\w\u4e00-\u9fa5-]+/g, '_');
+  downloadBlob(md, `${name}_video_script.md`);
+}
+
+// ============ Final Export (zip everything) ============
+async function finalExport(){
+  const btn = event.target;
+  btn.disabled = true;
+  btn.innerHTML = '<span class="spinner"></span> 打包中...';
+  try{
+    const zip = new JSZip();
+    const name = (state.mind.title || 'project').replace(/[^\w\u4e00-\u9fa5-]+/g, '_');
+
+    // 1. Project JSON
+    zip.file(`${name}_project.json`, JSON.stringify(state, null, 2));
+
+    // 2. IPO Markdown
+    updateIpoMarkdown();
+    const ipoMd = $('#ipoMarkdown').value;
+    if(ipoMd) zip.file(`${name}_IPO.md`, ipoMd);
+
+    // 3. Python code
+    if(state.code.full){
+      const ext = state.code.lang === 'python' ? 'py' : state.code.lang === 'javascript' ? 'js' : 'java';
+      zip.file(`${name}.${ext}`, state.code.full);
+    }
+
+    // 4. PPTX
+    if(state.completed[4]){
+      try{
+        refreshOutline();
+        const pres = await buildPPTXBlob();
+        if(pres) zip.file(`${name}.pptx`, pres);
+      }catch(e){ console.warn('PPTX build skipped', e); }
+    }
+
+    // 5. Video script
+    if(state.video.script){
+      const md = `# ${state.mind.title} — 影音腳本\n\n## 影片腳本\n${state.video.script}\n\n## 旁白\n${state.video.narration}\n\n## AI 影片提示\n${state.video.prompts}`;
+      zip.file(`${name}_video_script.md`, md);
+    }
+    if(state.video.srt) zip.file(`${name}.srt`, state.video.srt);
+    if(state.video.vtt) zip.file(`${name}.vtt`, state.video.vtt);
+
+    // Build manifest
+    const manifest = `# ${state.mind.title || '專題'} — 成果壓縮包
+
+由智慧專題創作平台 ${new Date().toLocaleString('zh-TW')} 生成。
+
+## 包含檔案
+
+- \`${name}_project.json\` — 完整專案資料，可日後匯入繼續編輯
+- \`${name}_IPO.md\` — IPO 結構分析（Markdown）
+- \`${name}.${state.code.lang === 'python' ? 'py' : state.code.lang === 'javascript' ? 'js' : 'java'}\` — 程式碼骨架
+- \`${name}.pptx\` — 簡報檔（若有）
+- \`${name}_video_script.md\` — 影音腳本與旁白
+- \`${name}.srt\` / \`${name}.vtt\` — 字幕檔
+`;
+    zip.file('README.md', manifest);
+
+    const blob = await zip.generateAsync({type:'blob'});
+    downloadBlob(blob, `${name}_full_package.zip`);
+    toast('全部成果已打包下載 🎉', 'ok');
+  }catch(e){
+    console.error(e);
+    toast('打包失敗：'+e.message, 'err');
+  }finally{
+    btn.disabled = false;
+    btn.innerHTML = '🎉 完成！打包下載全部成果';
+  }
+}
+
+async function buildPPTXBlob(){
+  // Mirror buildAndDownloadPPTX but return blob
+  const pres = new PptxGenJS();
+  pres.layout = 'LAYOUT_WIDE';
+  pres.title = state.mind.title || 'Presentation';
+  pres.author = state.ppt.author || '智慧專題創作平台';
+  const theme = PPT_THEMES[state.ppt.theme] || PPT_THEMES.academic;
+  const isZh = state.ppt.lang === 'zh';
+  const total = state.ppt.outline.length;
+  const dateStr = new Date().toLocaleDateString(isZh?'zh-TW':'en-US');
+  const footerText = `${state.mind.title || 'Presentation'} · ${dateStr}`;
+
+  function decorate(slide, idx){
+    slide.background = { color: theme.bg };
+    slide.addShape(pres.ShapeType.rect, { x:0, y:0, w:13.333, h:0.12, fill:{color:theme.accent}, line:{color:theme.accent} });
+    if(idx > 0){
+      slide.addText(`${idx+1} / ${total}`, { x:12.4, y:7.15, w:0.8, h:0.3, fontSize:9, color:theme.body, fontFace:theme.font, align:'right' });
+      slide.addText(footerText, { x:0.4, y:7.15, w:11.5, h:0.3, fontSize:9, color:theme.body, fontFace:theme.font });
+    }
+  }
+  function titleBar(slide, title){
+    slide.addText(title, { x:0.5, y:0.4, w:12.3, h:0.9, fontSize:26, bold:true, color:theme.title, fontFace:theme.font });
+    slide.addShape(pres.ShapeType.rect, { x:0.5, y:1.3, w:1.5, h:0.06, fill:{color:theme.accent}, line:{color:theme.accent} });
+  }
+  for(let i = 0; i < total; i++){
+    const meta = state.ppt.outline[i];
+    const slide = pres.addSlide();
+    decorate(slide, i);
+    if(meta.slot === 'cover'){
+      slide.addText(meta.title, { x:0.6, y:2.3, w:12.1, h:1.8, fontSize:42, bold:true, color:theme.title, fontFace:theme.font, align:'center', valign:'middle' });
+      if(state.mind.desc) slide.addText(state.mind.desc, { x:0.6, y:4.3, w:12.1, h:1.4, fontSize:16, color:theme.body, fontFace:theme.font, align:'center' });
+    } else if(meta.slot === 'agenda'){
+      titleBar(slide, meta.title);
+      const items = state.ppt.outline.slice(2).filter(s=>s.slot!=='thanks').map((s,n)=>`${n+1}. ${s.title}`);
+      slide.addText(items.join('\n'), { x:0.7, y:1.7, w:12.0, h:5.0, fontSize:16, color:theme.body, fontFace:theme.font, valign:'top', paraSpaceAfter:6 });
+    } else if(meta.slot === 'mindmap'){
+      titleBar(slide, meta.title);
+      const cols = [
+        {title:'📥 INPUT', items:state.mind.inputs, color:'3B82F6'},
+        {title:'⚙️ PROCESS', items:state.mind.processes, color:'A855F7'},
+        {title:'📊 OUTPUT', items:state.mind.outputs, color:'EC4899'}
+      ];
+      cols.forEach((c, idx)=>{
+        const x = 0.5 + idx * 4.2;
+        slide.addShape(pres.ShapeType.roundRect, { x:x, y:1.7, w:4.0, h:5.3, fill:{color:'FFFFFF', transparency:80}, line:{color:c.color, width:2}, rectRadius:0.1 });
+        slide.addText(c.title, { x:x, y:1.85, w:4.0, h:0.5, fontSize:16, bold:true, color:c.color, fontFace:theme.font, align:'center' });
+        slide.addText((c.items||[]).map(s=>'• '+s).join('\n'), { x:x+0.2, y:2.4, w:3.6, h:4.5, fontSize:12, color:theme.body, fontFace:theme.font, valign:'top' });
+      });
+    } else if(meta.slot === 'ipo'){
+      titleBar(slide, meta.title);
+      const rows = state.ipo.rows.filter(r=>r.stage===meta.stage);
+      if(rows.length){
+        const tableData = [[{text:'項目',options:{bold:true,fill:{color:theme.accent},color:'FFFFFF'}},{text:'說明',options:{bold:true,fill:{color:theme.accent},color:'FFFFFF'}}]];
+        rows.forEach(r=> tableData.push([r.name, r.note || '-']));
+        slide.addTable(tableData, { x:0.5, y:1.7, w:12.3, h:5.0, fontSize:13, color:theme.body, fontFace:theme.font, border:{type:'solid',color:'CCCCCC',pt:0.5}, colW:[3.5, 8.8] });
+      }
+    } else if(meta.slot === 'code'){
+      titleBar(slide, meta.title);
+      const codeText = state.code[meta.kind] || '';
+      const lines = codeText.split('\n').slice(0, 28);
+      slide.addText(lines.join('\n'), { x:0.5, y:1.6, w:12.3, h:5.4, fontSize:10, fontFace:'Courier New', color:theme.body, fill:{color:'F1F5F9'}, valign:'top' });
+    } else if(meta.slot === 'thanks'){
+      slide.addText(meta.title, { x:0.6, y:2.8, w:12.1, h:1.6, fontSize:48, bold:true, color:theme.title, fontFace:theme.font, align:'center' });
+    } else if(meta.slot === 'intro'){
+      titleBar(slide, meta.title);
+      const lines = [];
+      if(state.mind.desc) lines.push(state.mind.desc);
+      slide.addText(lines.join('\n'), { x:0.7, y:1.7, w:12.0, h:5.0, fontSize:16, color:theme.body, fontFace:theme.font, valign:'top' });
+    }
+  }
+  return await pres.write({ outputType: 'blob' });
+}
+
+// ============ AI Layer (unified call) ============
+async function callAI(systemPrompt, userMessage, maxTokens = 4000){
+  if(!aiConfig.apiKey) throw new Error('未設定 API 金鑰');
+  const model = aiConfig.model || DEFAULT_MODELS[aiConfig.provider];
+
+  if(aiConfig.provider === 'gemini'){
+    const realMax = Math.max(maxTokens, 8000);
+    const url = `https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(model)}:generateContent?key=${encodeURIComponent(aiConfig.apiKey)}`;
+    const genConfig = {
+      maxOutputTokens: realMax,
+      temperature: 0.5,
+      responseMimeType: 'text/plain'
+    };
+    if(/(^|[^\d])2\.?5/.test(model)){
+      genConfig.thinkingConfig = { thinkingBudget: 0 };
+    }
+    const safetySettings = [
+      'HARM_CATEGORY_HARASSMENT',
+      'HARM_CATEGORY_HATE_SPEECH',
+      'HARM_CATEGORY_SEXUALLY_EXPLICIT',
+      'HARM_CATEGORY_DANGEROUS_CONTENT'
+    ].map(category => ({ category, threshold:'BLOCK_NONE' }));
+    const resp = await fetch(url, {
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({
+        systemInstruction:{parts:[{text:systemPrompt}]},
+        contents:[{role:'user', parts:[{text:userMessage}]}],
+        generationConfig: genConfig,
+        safetySettings
+      })
+    });
+    const data = await resp.json();
+    if(data.error) throw new Error(data.error.message || 'Gemini API 錯誤');
+    const cands = data.candidates || [];
+    if(!cands.length){
+      const reason = data.promptFeedback?.blockReason;
+      throw new Error('Gemini 沒有回傳內容' + (reason?`（${reason}）`:''));
+    }
+    const parts = cands[0].content?.parts || [];
+    return parts.map(p=>p.text||'').join('').trim();
+  }
+
+  if(aiConfig.provider === 'anthropic'){
+    const resp = await fetch('https://api.anthropic.com/v1/messages', {
+      method:'POST',
+      headers:{
+        'Content-Type':'application/json',
+        'x-api-key': aiConfig.apiKey,
+        'anthropic-version':'2023-06-01',
+        'anthropic-dangerous-direct-browser-access':'true'
+      },
+      body: JSON.stringify({
+        model,
+        max_tokens: Math.max(maxTokens, 8000),
+        system: systemPrompt,
+        messages:[{role:'user', content:userMessage}]
+      })
+    });
+    const data = await resp.json();
+    if(data.error) throw new Error(data.error.message || 'Anthropic API 錯誤');
+    return (data.content||[]).filter(b=>b.type==='text').map(b=>b.text).join('');
+  }
+
+  if(aiConfig.provider === 'openai'){
+    const resp = await fetch('https://api.openai.com/v1/chat/completions', {
+      method:'POST',
+      headers:{
+        'Content-Type':'application/json',
+        'Authorization':'Bearer '+aiConfig.apiKey
+      },
+      body: JSON.stringify({
+        model,
+        max_tokens: Math.max(maxTokens, 4000),
+        messages:[
+          {role:'system', content:systemPrompt},
+          {role:'user', content:userMessage}
+        ]
+      })
+    });
+    const data = await resp.json();
+    if(data.error) throw new Error(data.error.message || 'OpenAI API 錯誤');
+    return data.choices?.[0]?.message?.content || '';
+  }
+  throw new Error('未知的 AI 提供者：'+aiConfig.provider);
+}
+
+// ============ AI Settings UI ============
+function openAISettings(){
+  loadAI();
+  $('#aiProvider').value = aiConfig.provider;
+  $('#aiApiKey').value = aiConfig.apiKey || '';
+  $('#aiModel').value = aiConfig.model || '';
+  updateAIModelHint();
+  $('#aiModal').classList.add('show');
+}
+
+function closeModal(id){
+  $('#'+id).classList.remove('show');
+}
+
+function updateAIModelHint(){
+  const p = $('#aiProvider').value;
+  $('#aiKeyHint').innerHTML = KEY_HINTS[p];
+  $('#aiModelHint').textContent = `預設：${DEFAULT_MODELS[p]}`;
+  $('#aiModel').placeholder = DEFAULT_MODELS[p];
+}
+
+function saveAISettings(){
+  aiConfig.provider = $('#aiProvider').value;
+  aiConfig.apiKey = $('#aiApiKey').value.trim();
+  aiConfig.model = $('#aiModel').value.trim();
+  saveAI();
+  updateAIStatus();
+  closeModal('aiModal');
+  toast('AI 設定已儲存', 'ok');
+}
+
+async function testAIConnection(){
+  // Save first
+  aiConfig.provider = $('#aiProvider').value;
+  aiConfig.apiKey = $('#aiApiKey').value.trim();
+  aiConfig.model = $('#aiModel').value.trim();
+  if(!aiConfig.apiKey){ toast('請先輸入金鑰', 'warn'); return; }
+  toast('測試中...');
+  try{
+    const r = await callAI('你是測試助手', '請回覆「連線正常」四字', 50);
+    toast('✓ 連線測試成功：'+r.slice(0,30), 'ok');
+    saveAI();
+    updateAIStatus();
+  }catch(e){
+    toast('連線失敗：'+e.message, 'err');
+  }
+}
+
+function updateAIStatus(){
+  const el = $('#aiStatus');
+  const txt = $('#aiStatusText');
+  if(aiConfig.apiKey){
+    el.classList.add('ok');
+    const provName = {gemini:'Gemini', anthropic:'Claude', openai:'OpenAI'}[aiConfig.provider];
+    txt.textContent = `${provName} · 已設定`;
+  } else {
+    el.classList.remove('ok');
+    txt.textContent = '尚未設定';
+  }
+}
+
+// ============ Project Import/Export ============
+function exportProject(){
+  readMindForm();
+  saveState();
+  const name = (state.mind.title || 'project').replace(/[^\w\u4e00-\u9fa5-]+/g, '_');
+  downloadBlob(JSON.stringify(state, null, 2), `${name}_project.json`, 'application/json');
+  toast('專案已匯出', 'ok');
+}
+
+function importProject(ev){
+  const f = ev.target.files[0];
+  if(!f) return;
+  const reader = new FileReader();
+  reader.onload = e => {
+    try{
+      const loaded = JSON.parse(e.target.result);
+      state = Object.assign(state, loaded);
+      saveState();
+      writeMindForm();
+      renderIpoTable();
+      if(state.code.full) displayCode();
+      updateAIStatus();
+      // Refresh step nav
+      goStep(state.step || 1);
+      $$('.step-item').forEach(b => {
+        const sn = parseInt(b.dataset.step);
+        b.classList.toggle('done', state.completed[sn]);
+        const chk = b.querySelector('.step-check');
+        if(chk) chk.textContent = state.completed[sn] ? '✓' : '';
+      });
+      toast('專案已匯入', 'ok');
+    }catch(err){
+      toast('匯入失敗：'+err.message, 'err');
+    }
+  };
+  reader.readAsText(f);
+  ev.target.value = '';
+}
+
+function clearAllData(){
+  if(!confirm('確定要清除所有資料嗎？此操作無法復原。')) return;
+  localStorage.removeItem(STORAGE_KEY);
+  location.reload();
+}
+
+function loadDemoData(){
+  if(state.mind.title && !confirm('將覆蓋現有資料，繼續？')) return;
+  state.mind = {
+    title: '智慧農業 人機協作績效評估系統',
+    desc: '透過統計建模與蒙地卡羅模擬，量化分析人機協作模式在智慧農業情境下的效率、成本與精準度。',
+    inputs: ['土壤溼度感測器資料', '氣象站氣溫紀錄', '作業人員姓名與工時', '機器人作業日誌', '作物種類與面積'],
+    processes: ['資料清洗與遺漏值補值', '人工作業時間統計', '機器自動化作業時間統計', '統計顯著性檢定（t-test）', '蒙地卡羅模擬（1000 次）', '績效指標計算（效率、精準度、成本）'],
+    outputs: ['人機協作效率指標', '成本節省百分比', '統計摘要報表（CSV）', '視覺化長條圖與散布圖', '改善建議與情境模擬結果']
+  };
+  state.ipo.rows = [
+    ...state.mind.inputs.map(x=>({stage:'input', name:x, note:''})),
+    ...state.mind.processes.map(x=>({stage:'process', name:x, note:''})),
+    ...state.mind.outputs.map(x=>({stage:'output', name:x, note:''}))
+  ];
+  state.completed = { 1:true, 2:true, 3:false, 4:false, 5:false };
+  saveState();
+  writeMindForm();
+  renderIpoTable();
+  goStep(1);
+  toast('已載入示範資料（智慧農業專題）', 'ok');
+}
+
+// ============ Initialization ============
+window.addEventListener('DOMContentLoaded', ()=>{
+  loadState();
+  loadAI();
+  writeMindForm();
+  if(state.code.full) displayCode();
+  updateAIStatus();
+  $('#pptAuthor').value = state.ppt.author || '';
+  $('#pptTheme').value = state.ppt.theme || 'academic';
+  $('#pptLang').value = state.ppt.lang || 'zh';
+  $('#vidLen').value = state.video.len || 60;
+  $('#vidT1').value = state.video.t1 || 10;
+  $('#vidT2').value = state.video.t2 || 20;
+  $('#vidT3').value = state.video.t3 || 20;
+  // Restore step nav state
+  $$('.step-item').forEach(b => {
+    const sn = parseInt(b.dataset.step);
+    b.classList.toggle('done', state.completed[sn]);
+    const chk = b.querySelector('.step-check');
+    if(chk) chk.textContent = state.completed[sn] ? '✓' : '';
+  });
+  goStep(state.step || 1);
+
+  // Auto-save on changes
+  ['proj-title','proj-desc','branch-input','branch-process','branch-output'].forEach(id=>{
+    const el = $('#'+id);
+    if(el) el.addEventListener('blur', ()=>{ readMindForm(); saveState(); });
+  });
+
+  // Initialize new features
+  initProjectSwitcher();
+  initMermaid();
+  initStats();
+  injectModuleHelpButtons();
+});
+
+// ===== 擴充功能模組 v2 =====
+// ===================================================================
+// 擴充功能模組 v2
+// ===================================================================
+
+// ============ 多專題管理 ============
+const PROJECTS_KEY = 'spp_projects_list_v1';
+const STATS_KEY = 'spp_stats_v1';
+
+let projectsList = []; // [{id, name, createdAt}]
+let currentProjectId = 'default';
+let stats = {
+  aiCalls: 0,
+  totalChars: 0,
+  sessionsCount: 0,
+  startTime: Date.now(),
+  exports: { pptx:0, pdf:0, docx:0, ipynb:0, mp4:0, srt:0, zip:0 }
+};
+
+function loadProjectsList(){
+  try{
+    const raw = localStorage.getItem(PROJECTS_KEY);
+    if(raw){
+      const p = JSON.parse(raw);
+      projectsList = p.list || [];
+      currentProjectId = p.current || 'default';
+    }
+  }catch(e){}
+  if(!projectsList.length){
+    projectsList = [{ id:'default', name:'預設專題', createdAt: Date.now() }];
+  }
+}
+
+function saveProjectsList(){
+  localStorage.setItem(PROJECTS_KEY, JSON.stringify({
+    list: projectsList,
+    current: currentProjectId
+  }));
+}
+
+function getProjectStorageKey(id){ return `spp_project_${id}_v1`; }
+
+function initProjectSwitcher(){
+  loadProjectsList();
+  // Migrate legacy storage: if STORAGE_KEY exists and default project has no data
+  const legacyData = localStorage.getItem(STORAGE_KEY);
+  const defaultKey = getProjectStorageKey('default');
+  if(legacyData && !localStorage.getItem(defaultKey)){
+    localStorage.setItem(defaultKey, legacyData);
+  }
+  // Sync currently-loaded state to current project
+  refreshProjectSwitcher();
+  // Load current project's state
+  switchProject(currentProjectId, true);
+}
+
+function refreshProjectSwitcher(){
+  const sel = $('#projectSwitcher');
+  if(!sel) return;
+  sel.innerHTML = projectsList.map(p =>
+    `<option value="${p.id}" ${p.id===currentProjectId?'selected':''}>${escapeHtml(p.name)}</option>`
+  ).join('');
+}
+
+function switchProject(id, silent){
+  // Save current state first
+  if(currentProjectId && !silent){
+    readMindForm();
+    localStorage.setItem(getProjectStorageKey(currentProjectId), JSON.stringify(state));
+  }
+  currentProjectId = id;
+  saveProjectsList();
+  // Load new project state
+  const raw = localStorage.getItem(getProjectStorageKey(id));
+  if(raw){
+    try{
+      const loaded = JSON.parse(raw);
+      // Reset state to defaults, then merge
+      Object.assign(state, {
+        step: 1,
+        mind: { title:'', desc:'', inputs:[], processes:[], outputs:[] },
+        ipo: { rows:[] },
+        code: { mode:'template', lang:'python', hint:'', full:'', input:'', process:'', output:'' },
+        ppt: { theme:'academic', lang:'zh', author:'', outline:[] },
+        video: { len:60, t1:10, t2:20, t3:20, aud:'一般大眾', style:'專業簡報', script:'', narration:'', prompts:'', srt:'', vtt:'' },
+        completed: { 1:false, 2:false, 3:false, 4:false, 5:false }
+      });
+      Object.assign(state, loaded);
+    }catch(e){ console.warn(e); }
+  } else {
+    // Fresh empty state
+    Object.assign(state, {
+      step: 1,
+      mind: { title:'', desc:'', inputs:[], processes:[], outputs:[] },
+      ipo: { rows:[] },
+      code: { mode:'template', lang:'python', hint:'', full:'', input:'', process:'', output:'' },
+      ppt: { theme:'academic', lang:'zh', author:'', outline:[] },
+      video: { len:60, t1:10, t2:20, t3:20, aud:'一般大眾', style:'專業簡報', script:'', narration:'', prompts:'', srt:'', vtt:'' },
+      completed: { 1:false, 2:false, 3:false, 4:false, 5:false }
+    });
+  }
+  // Repaint UI
+  writeMindForm();
+  $('#pptAuthor').value = state.ppt.author || '';
+  $('#pptTheme').value = state.ppt.theme || 'academic';
+  $('#pptLang').value = state.ppt.lang || 'zh';
+  $('#vidLen').value = state.video.len || 60;
+  $('#vidT1').value = state.video.t1 || 10;
+  $('#vidT2').value = state.video.t2 || 20;
+  $('#vidT3').value = state.video.t3 || 20;
+  if(state.code.full) displayCode();
+  $$('.step-item').forEach(b => {
+    const sn = parseInt(b.dataset.step);
+    b.classList.toggle('done', state.completed[sn]);
+    const chk = b.querySelector('.step-check');
+    if(chk) chk.textContent = state.completed[sn] ? '✓' : '';
+  });
+  goStep(state.step || 1);
+  if(!silent) toast(`已切換到專題：${projectsList.find(p=>p.id===id)?.name || id}`, 'ok');
+}
+
+// Override saveState to also write to current project slot
+const _origSaveState = saveState;
+saveState = function(){
+  _origSaveState();
+  if(currentProjectId){
+    try{
+      localStorage.setItem(getProjectStorageKey(currentProjectId), JSON.stringify(state));
+    }catch(e){}
+  }
+};
+
+function createNewProject(){
+  const name = prompt('新專題名稱：');
+  if(!name) return;
+  const id = 'proj_' + Date.now();
+  projectsList.push({ id, name, createdAt: Date.now() });
+  // Save current first
+  readMindForm();
+  localStorage.setItem(getProjectStorageKey(currentProjectId), JSON.stringify(state));
+  currentProjectId = id;
+  saveProjectsList();
+  refreshProjectSwitcher();
+  switchProject(id, true);
+  toast(`已建立專題：${name}`, 'ok');
+}
+
+function renameProject(){
+  const cur = projectsList.find(p => p.id === currentProjectId);
+  if(!cur) return;
+  const newName = prompt('新名稱：', cur.name);
+  if(!newName) return;
+  cur.name = newName;
+  saveProjectsList();
+  refreshProjectSwitcher();
+  toast('已重新命名', 'ok');
+}
+
+function deleteProject(){
+  if(projectsList.length <= 1){
+    toast('至少要保留一個專題', 'warn');
+    return;
+  }
+  const cur = projectsList.find(p => p.id === currentProjectId);
+  if(!cur) return;
+  if(!confirm(`確定要刪除「${cur.name}」？此操作無法復原。`)) return;
+  localStorage.removeItem(getProjectStorageKey(currentProjectId));
+  projectsList = projectsList.filter(p => p.id !== currentProjectId);
+  currentProjectId = projectsList[0].id;
+  saveProjectsList();
+  refreshProjectSwitcher();
+  switchProject(currentProjectId, true);
+  toast('已刪除', 'ok');
+}
+
+// ============ 統計追蹤 ============
+function initStats(){
+  try{
+    const raw = localStorage.getItem(STATS_KEY);
+    if(raw) Object.assign(stats, JSON.parse(raw));
+  }catch(e){}
+  stats.sessionsCount = (stats.sessionsCount || 0) + 1;
+  saveStats();
+}
+function saveStats(){
+  try{ localStorage.setItem(STATS_KEY, JSON.stringify(stats)); }catch(e){}
+}
+function trackAICall(chars){
+  stats.aiCalls = (stats.aiCalls || 0) + 1;
+  stats.totalChars = (stats.totalChars || 0) + (chars || 0);
+  saveStats();
+}
+function trackExport(kind){
+  if(!stats.exports) stats.exports = {};
+  stats.exports[kind] = (stats.exports[kind] || 0) + 1;
+  saveStats();
+}
+
+// Wrap callAI to track usage
+const _origCallAI = callAI;
+callAI = async function(sys, user, max){
+  const result = await _origCallAI(sys, user, max);
+  trackAICall((result || '').length);
+  return result;
+};
+
+function openDashboard(){
+  const completed = Object.values(state.completed).filter(Boolean).length;
+  const pct = Math.round(completed / 5 * 100);
+  const mindWords = (state.mind.inputs.length + state.mind.processes.length + state.mind.outputs.length);
+  const ipoCount = state.ipo.rows.length;
+  const codeLines = state.code.full ? state.code.full.split('\n').length : 0;
+  const scriptWords = (state.video.narration || '').length;
+
+  const html = `
+    <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:14px;margin-bottom:20px">
+      <div class="stat-card" style="background:rgba(168,85,247,.12);border:1px solid rgba(168,85,247,.3);padding:16px;border-radius:10px;text-align:center">
+        <div style="font-size:32px;font-weight:800;color:#a855f7">${pct}%</div>
+        <div style="font-size:12px;color:var(--muted);margin-top:4px">完成度</div>
+        <div style="font-size:11px;color:var(--dim)">${completed} / 5 步</div>
+      </div>
+      <div class="stat-card" style="background:rgba(59,130,246,.12);border:1px solid rgba(59,130,246,.3);padding:16px;border-radius:10px;text-align:center">
+        <div style="font-size:32px;font-weight:800;color:#3b82f6">${stats.aiCalls || 0}</div>
+        <div style="font-size:12px;color:var(--muted);margin-top:4px">AI 呼叫次數</div>
+        <div style="font-size:11px;color:var(--dim)">累計 ${(stats.totalChars || 0).toLocaleString()} 字</div>
+      </div>
+      <div class="stat-card" style="background:rgba(236,72,153,.12);border:1px solid rgba(236,72,153,.3);padding:16px;border-radius:10px;text-align:center">
+        <div style="font-size:32px;font-weight:800;color:#ec4899">${projectsList.length}</div>
+        <div style="font-size:12px;color:var(--muted);margin-top:4px">專題數</div>
+        <div style="font-size:11px;color:var(--dim)">使用次數 ${stats.sessionsCount}</div>
+      </div>
+    </div>
+
+    <h4 style="margin-bottom:10px;font-size:13px;color:var(--muted);text-transform:uppercase;letter-spacing:.5px">當前專題進度</h4>
+    <table class="ipo-table" style="margin-bottom:20px">
+      <thead><tr><th>步驟</th><th>狀態</th><th>內容統計</th></tr></thead>
+      <tbody>
+        <tr><td>① 心智圖</td><td>${state.completed[1]?'✓ 已完成':'⏳ 未完成'}</td><td>${mindWords} 個項目</td></tr>
+        <tr><td>② IPO 表</td><td>${state.completed[2]?'✓ 已完成':'⏳ 未完成'}</td><td>${ipoCount} 列</td></tr>
+        <tr><td>③ Python</td><td>${state.completed[3]?'✓ 已完成':'⏳ 未完成'}</td><td>${codeLines} 行</td></tr>
+        <tr><td>④ PPT</td><td>${state.completed[4]?'✓ 已完成':'⏳ 未完成'}</td><td>${state.ppt.outline.length || 0} 張投影片</td></tr>
+        <tr><td>⑤ 影音腳本</td><td>${state.completed[5]?'✓ 已完成':'⏳ 未完成'}</td><td>${scriptWords} 字</td></tr>
+      </tbody>
+    </table>
+
+    <h4 style="margin-bottom:10px;font-size:13px;color:var(--muted);text-transform:uppercase;letter-spacing:.5px">匯出統計</h4>
+    <div style="display:flex;flex-wrap:wrap;gap:8px">
+      ${Object.entries(stats.exports || {}).map(([k,v])=>`<span class="chip">${k.toUpperCase()} × ${v}</span>`).join('') || '<span style="color:var(--muted);font-size:13px">尚無匯出紀錄</span>'}
+    </div>
+
+    <div class="btn-row" style="margin-top:20px">
+      <button class="btn" onclick="resetStats()">🔄 重設統計</button>
+    </div>
+  `;
+  $('#dashBody').innerHTML = html;
+  $('#dashModal').classList.add('show');
+}
+
+function resetStats(){
+  if(!confirm('確定要重設所有統計數據？')) return;
+  stats = { aiCalls:0, totalChars:0, sessionsCount:1, startTime:Date.now(), exports:{} };
+  saveStats();
+  openDashboard();
+  toast('已重設', 'ok');
+}
+
+// ============ AI 審稿（心智圖）============
+async function aiReviewMind(){
+  readMindForm();
+  if(!state.mind.title){ toast('請先填寫專題名稱', 'warn'); return; }
+  if(!aiConfig.apiKey){ openAISettings(); return; }
+  const btn = event.target;
+  btn.disabled = true;
+  btn.innerHTML = '<span class="spinner"></span> 審稿中...';
+  try{
+    const prompt = `你是專題系統審稿教師。學生提交以下心智圖，請以「先思考、後驗證」原則進行專業審稿，找出邏輯漏洞與改進方向。
+
+專題：${state.mind.title}
+描述：${state.mind.desc || '（未填）'}
+INPUT：${state.mind.inputs.join('、') || '（空）'}
+PROCESS：${state.mind.processes.join('、') || '（空）'}
+OUTPUT：${state.mind.outputs.join('、') || '（空）'}
+
+請按以下格式輸出（嚴格遵守，不加前言後語）：
+
+[評分]
+總分：X / 100（完整性 25 / 邏輯性 25 / 可行性 25 / 創新性 25）
+[/評分]
+
+[優點]
+- 優點1
+- 優點2
+- 優點3
+[/優點]
+
+[問題]
+- 問題1（明確指出哪個 INPUT/PROCESS/OUTPUT 項目）
+- 問題2
+- 問題3
+[/問題]
+
+[建議]
+- 改進建議1
+- 改進建議2
+- 改進建議3
+[/建議]`;
+    const result = await callAI('你是嚴格但建設性的專題審稿教師', prompt, 1500);
+    renderReviewResult(result, '#mindReviewBody');
+    $('#mindReviewCard').style.display = '';
+    $('#mindReviewCard').scrollIntoView({behavior:'smooth', block:'start'});
+  }catch(e){
+    toast('審稿失敗：'+e.message, 'err');
+  }finally{
+    btn.disabled = false;
+    btn.innerHTML = '🔍 AI 審稿';
+  }
+}
+
+function renderReviewResult(text, target){
+  const sections = {};
+  ['評分','優點','問題','建議'].forEach(name=>{
+    const m = text.match(new RegExp(`\\[${name}\\]([\\s\\S]*?)\\[\\/${name}\\]`));
+    if(m) sections[name] = m[1].trim();
+  });
+  let html = '';
+  if(sections['評分']){
+    const scoreMatch = sections['評分'].match(/(\d+)\s*\/\s*100/);
+    const score = scoreMatch ? parseInt(scoreMatch[1]) : 0;
+    const color = score >= 80 ? 'var(--ok)' : score >= 60 ? 'var(--warn)' : 'var(--err)';
+    html += `<div style="text-align:center;margin-bottom:20px"><div style="font-size:48px;font-weight:800;color:${color}">${score}<span style="font-size:20px;color:var(--muted)"> / 100</span></div><div style="font-size:13px;color:var(--muted);margin-top:6px">${escapeHtml(sections['評分'].replace(/總分.*?\(/,'(').replace(/總分.*?）/,'（'))}</div></div>`;
+  }
+  ['優點','問題','建議'].forEach(k=>{
+    if(!sections[k]) return;
+    const icon = {'優點':'✅','問題':'⚠️','建議':'💡'}[k];
+    const color = {'優點':'#22c55e','問題':'#f59e0b','建議':'#3b82f6'}[k];
+    html += `<div style="margin-bottom:14px"><h4 style="color:${color};font-size:14px;margin-bottom:8px">${icon} ${k}</h4><div style="padding:12px;background:var(--surface2);border-radius:8px;border-left:3px solid ${color};line-height:1.7;font-size:13px;white-space:pre-line">${escapeHtml(sections[k])}</div></div>`;
+  });
+  $(target).innerHTML = html || `<pre class="code-box">${escapeHtml(text)}</pre>`;
+}
+
+// ============ AI 審稿（IPO）============
+async function aiReviewIpo(){
+  if(!state.ipo.rows.length){ toast('IPO 表為空', 'warn'); return; }
+  if(!aiConfig.apiKey){ openAISettings(); return; }
+  const btn = event.target;
+  btn.disabled = true;
+  btn.innerHTML = '<span class="spinner"></span> 審查中...';
+  try{
+    const ipoText = state.ipo.rows.map(r=>{
+      const lbl = {input:'I', process:'P', output:'O'}[r.stage];
+      return `[${lbl}] ${r.name}${r.note?' — '+r.note:''}`;
+    }).join('\n');
+    const prompt = `你是系統架構審稿專家。請審查以下 IPO 結構，檢查是否滿足以下原則：
+1. INPUT 與 OUTPUT 是否對應（每個 OUTPUT 都應該有對應的 INPUT 來源）
+2. PROCESS 是否完整（從 INPUT 到 OUTPUT 的處理鏈是否合理）
+3. 是否有遺漏的關鍵步驟
+4. 是否有冗餘或多餘的項目
+
+專題：${state.mind.title}
+IPO 結構：
+${ipoText}
+
+請按以下格式輸出（嚴格遵守）：
+
+[評分]
+總分：X / 100
+[/評分]
+
+[優點]
+- ...
+[/優點]
+
+[問題]
+- ...
+[/問題]
+
+[建議]
+- ...
+[/建議]`;
+    const result = await callAI('你是系統架構審稿專家', prompt, 1500);
+    renderReviewResult(result, '#ipoReviewBody');
+    $('#ipoReviewCard').style.display = '';
+    $('#ipoReviewCard').scrollIntoView({behavior:'smooth', block:'start'});
+  }catch(e){
+    toast('審查失敗：'+e.message, 'err');
+  }finally{
+    btn.disabled = false;
+    btn.innerHTML = '🔍 AI 邏輯審查';
+  }
+}
+
+// ============ AI 程式碼審查 ============
+async function aiReviewCode(){
+  if(!state.code.full){ toast('請先生成程式碼', 'warn'); return; }
+  if(!aiConfig.apiKey){ openAISettings(); return; }
+  const btn = event.target;
+  btn.disabled = true;
+  btn.innerHTML = '<span class="spinner"></span> 審查中...';
+  try{
+    const prompt = `你是資深 ${state.code.lang} 程式碼審查專家。請檢查以下程式碼是否有：
+1. 邏輯錯誤或 bug
+2. 安全性問題
+3. 效能瓶頸
+4. 程式碼風格與最佳實踐
+5. 缺少的錯誤處理
+
+程式碼：
+\`\`\`${state.code.lang}
+${state.code.full.slice(0, 5000)}
+\`\`\`
+
+請按以下格式輸出（嚴格遵守）：
+
+[評分]
+總分：X / 100
+[/評分]
+
+[優點]
+- ...
+[/優點]
+
+[問題]
+- 行號或函式名 + 問題描述
+- ...
+[/問題]
+
+[建議]
+- ...
+[/建議]`;
+    const result = await callAI('你是嚴謹的程式碼審查專家', prompt, 2500);
+    renderReviewResult(result, '#codeReviewBody');
+    $('#codeReviewCard').style.display = '';
+    $('#codeReviewCard').scrollIntoView({behavior:'smooth', block:'start'});
+  }catch(e){
+    toast('審查失敗：'+e.message, 'err');
+  }finally{
+    btn.disabled = false;
+    btn.innerHTML = '🐛 AI 找 Bug';
+  }
+}
+
+// ============ AI 簡報評分 ============
+async function aiScorePresentation(){
+  refreshOutline();
+  if(!state.ppt.outline.length){ toast('大綱為空', 'warn'); return; }
+  if(!aiConfig.apiKey){ openAISettings(); return; }
+  const btn = event.target;
+  btn.disabled = true;
+  btn.innerHTML = '<span class="spinner"></span> 評分中...';
+  try{
+    const outlineText = state.ppt.outline.map((s, i)=>`${i+1}. [${s.slot}] ${s.title}`).join('\n');
+    const prompt = `你是專業簡報評審。請依以下標準評分（總分 100）：
+- 完整性（25 分）：是否含必要章節（封面、目錄、介紹、主體、結論）
+- 邏輯流（25 分）：投影片排序是否合理
+- 視覺平衡（25 分）：是否避免文字過多、有適當的圖表
+- 受眾適配（25 分）：是否考慮目標受眾
+
+專題：${state.mind.title}
+受眾：${state.ppt.lang === 'zh' ? '中文觀眾' : 'English audience'}
+大綱：
+${outlineText}
+
+請按以下格式輸出：
+
+[評分]
+總分：X / 100（完整性 X / 邏輯流 X / 視覺平衡 X / 受眾適配 X）
+[/評分]
+
+[優點]
+- ...
+[/優點]
+
+[問題]
+- ...
+[/問題]
+
+[建議]
+- 建議增加 XX 投影片
+- 建議調整 XX 順序
+- ...
+[/建議]`;
+    const result = await callAI('你是專業簡報評審', prompt, 1500);
+    renderReviewResult(result, '#pptScoreBody');
+    $('#pptScoreCard').style.display = '';
+    $('#pptScoreCard').scrollIntoView({behavior:'smooth', block:'start'});
+  }catch(e){
+    toast('評分失敗：'+e.message, 'err');
+  }finally{
+    btn.disabled = false;
+    btn.innerHTML = '⭐ AI 簡報評分';
+  }
+}
+
+// ============ 翻譯 ============
+function openTranslateModal(){
+  if(!aiConfig.apiKey){ openAISettings(); return; }
+  $('#translateModal').classList.add('show');
+  $('#translateResult').innerHTML = '';
+}
+
+const LANG_NAMES = {
+  en:'English', ja:'日本語', ko:'한국어',
+  es:'Español', fr:'Français', de:'Deutsch', 'zh-CN':'簡體中文'
+};
+
+async function runTranslate(){
+  const lang = $('#translateLang').value;
+  const langName = LANG_NAMES[lang];
+  const scopes = [];
+  if($('#trMind').checked) scopes.push('mind');
+  if($('#trIpo').checked) scopes.push('ipo');
+  if($('#trPpt').checked) scopes.push('ppt');
+  if($('#trScript').checked) scopes.push('script');
+  if(!scopes.length){ toast('請至少選一個翻譯範圍', 'warn'); return; }
+
+  const btn = event.target;
+  btn.disabled = true;
+  btn.innerHTML = '<span class="spinner"></span> 翻譯中...';
+  const resultDiv = $('#translateResult');
+  resultDiv.innerHTML = '<div class="alert alert-info">翻譯處理中，請稍候...</div>';
+
+  try{
+    const translated = {};
+
+    if(scopes.includes('mind')){
+      const src = `Title: ${state.mind.title}\nDescription: ${state.mind.desc}\nINPUT:\n${state.mind.inputs.join('\n')}\nPROCESS:\n${state.mind.processes.join('\n')}\nOUTPUT:\n${state.mind.outputs.join('\n')}`;
+      const t = await callAI(`You are a professional translator. Translate to ${langName}, preserve structure (Title:, INPUT:, etc.). Output translation only, no preamble.`, src, 2000);
+      translated.mind = t;
+    }
+    if(scopes.includes('ipo')){
+      const src = state.ipo.rows.map(r=>{
+        const lbl = {input:'INPUT', process:'PROCESS', output:'OUTPUT'}[r.stage];
+        return `[${lbl}] ${r.name}${r.note?' — '+r.note:''}`;
+      }).join('\n');
+      const t = await callAI(`Translate to ${langName}, preserve [INPUT]/[PROCESS]/[OUTPUT] tags exactly. Output only.`, src, 2000);
+      translated.ipo = t;
+    }
+    if(scopes.includes('ppt')){
+      refreshOutline();
+      const src = state.ppt.outline.map((s,i)=>`${i+1}. ${s.title}`).join('\n');
+      const t = await callAI(`Translate to ${langName}, keep numbering. Output only.`, src, 1000);
+      translated.ppt = t;
+    }
+    if(scopes.includes('script')){
+      if(state.video.script){
+        const t = await callAI(`Translate to ${langName}, preserve all time markers and 【】 brackets. Output only.`, state.video.script, 2500);
+        translated.script = t;
+      }
+    }
+
+    let html = '<div class="alert alert-ok">翻譯完成！</div>';
+    for(const [k, v] of Object.entries(translated)){
+      const labels = {mind:'心智圖', ipo:'IPO 表', ppt:'簡報大綱', script:'影音腳本'};
+      html += `<div style="margin-bottom:14px"><h4 style="margin-bottom:6px">${labels[k]} → ${langName}</h4><textarea readonly style="min-height:120px;font-size:12px;width:100%;padding:10px;background:var(--surface2);border:1px solid var(--border2);border-radius:8px;color:var(--text)">${escapeHtml(v)}</textarea></div>`;
+    }
+    html += `<div class="btn-row"><button class="btn btn-primary" onclick='downloadTranslated(${JSON.stringify(lang)},${JSON.stringify(translated)})'>⬇ 下載翻譯版 .md</button></div>`;
+    resultDiv.innerHTML = html;
+  }catch(e){
+    resultDiv.innerHTML = `<div class="alert alert-err">翻譯失敗：${escapeHtml(e.message)}</div>`;
+  }finally{
+    btn.disabled = false;
+    btn.innerHTML = '🚀 開始翻譯';
+  }
+}
+
+function downloadTranslated(lang, data){
+  let md = `# ${state.mind.title} — Translation (${LANG_NAMES[lang]})\n\n`;
+  if(data.mind) md += `## Mind Map\n\n${data.mind}\n\n`;
+  if(data.ipo) md += `## IPO Table\n\n${data.ipo}\n\n`;
+  if(data.ppt) md += `## Presentation Outline\n\n${data.ppt}\n\n`;
+  if(data.script) md += `## Video Script\n\n${data.script}\n\n`;
+  const name = (state.mind.title || 'project').replace(/[^\w\u4e00-\u9fa5-]+/g, '_');
+  downloadBlob(md, `${name}_${lang}.md`);
+  trackExport('md');
+}
+
+// ============ 規格合規檢查 ============
+function openSpecCheckModal(){
+  if(!aiConfig.apiKey){ openAISettings(); return; }
+  $('#specModal').classList.add('show');
+  $('#specResult').innerHTML = '';
+}
+
+const SPEC_RULES = {
+  mdpi: 'MDPI Engineering Proceedings 摘要規則：（1）字數 150-250 字英文；（2）含 Background / Methods / Results / Conclusions 四段；（3）含 3-5 個 Keywords；（4）避免縮寫未說明；（5）不可有圖表引用。',
+  ieee: 'IEEE Conference Paper 摘要規則：（1）字數 150-250 字英文；（2）含問題、方法、結果、結論四要素；（3）含 4-6 個 Index Terms；（4）使用過去式描述完成的工作；（5）避免引用文獻編號。',
+  thesis: '學位論文中文摘要規則：（1）字數 500-800 字；（2）含研究背景、目的、方法、結果、結論五段；（3）含 3-5 個關鍵字；（4）使用客觀第三人稱；（5）不出現「我」、「本人」等主觀用語。',
+  grant: '科技部專題計畫摘要規則：（1）含研究目的、文獻探討、研究方法、預期結果四段；（2）預期成果需具體可量化；（3）研究方法需明確（含演算法或工具）；（4）需有時程規劃。',
+  patent: '專利申請書摘要規則：（1）字數限 250 字內；（2）說明技術領域、解決的技術問題、技術手段、有益效果；（3）避免商業性宣傳用語；（4）所有技術特徵需清楚揭露。'
+};
+
+async function runSpecCheck(){
+  const target = $('#specTarget').value;
+  const extra = $('#specExtra').value.trim();
+  const btn = event.target;
+  btn.disabled = true;
+  btn.innerHTML = '<span class="spinner"></span> 檢查中...';
+
+  try{
+    // Compile current project content
+    const ipoText = state.ipo.rows.map(r=>{
+      const lbl = {input:'I', process:'P', output:'O'}[r.stage];
+      return `[${lbl}] ${r.name}`;
+    }).join('\n');
+
+    const content = `專題：${state.mind.title}
+描述：${state.mind.desc}
+IPO 摘要：
+${ipoText}
+
+${state.video.script ? '影音腳本：\n' + state.video.script.slice(0, 800) : ''}`;
+
+    const prompt = `你是學術寫作規格檢查員。請檢查以下專題內容是否符合下列規格，並產出符合規格的摘要建議。
+
+規格要求：
+${SPEC_RULES[target]}
+${extra ? '額外要求：' + extra : ''}
+
+專題內容：
+${content}
+
+請按以下格式輸出（嚴格遵守）：
+
+[檢查結果]
+○ 符合 / × 不符合 / △ 部分符合（每項規格條列檢查）
+[/檢查結果]
+
+[建議摘要]
+（依規格產出的修正版摘要，可直接使用）
+[/建議摘要]
+
+[關鍵字]
+（建議的關鍵字，逗號分隔）
+[/關鍵字]`;
+
+    const result = await callAI('你是嚴格的學術寫作規格檢查員', prompt, 2500);
+    const get = (tag)=>{
+      const m = result.match(new RegExp(`\\[${tag}\\]([\\s\\S]*?)\\[\\/${tag}\\]`));
+      return m ? m[1].trim() : '';
+    };
+    const checks = get('檢查結果');
+    const summary = get('建議摘要');
+    const keywords = get('關鍵字');
+
+    let html = '<div class="alert alert-ok">檢查完成</div>';
+    if(checks) html += `<h4 style="margin:14px 0 8px">📋 規格檢查</h4><div style="padding:12px;background:var(--surface2);border-radius:8px;line-height:1.8;font-size:13px;white-space:pre-line">${escapeHtml(checks)}</div>`;
+    if(summary) html += `<h4 style="margin:14px 0 8px">📝 建議摘要</h4><textarea readonly class="tall" style="font-size:13px;width:100%;padding:10px;background:var(--surface2);border:1px solid var(--border2);border-radius:8px;color:var(--text);min-height:160px">${escapeHtml(summary)}</textarea><div class="btn-row" style="margin-top:8px"><button class="btn" onclick="navigator.clipboard.writeText(\`${summary.replace(/`/g,'\\`').replace(/\$/g,'\\$')}\`).then(()=>toast('已複製','ok'))">📋 複製摘要</button></div>`;
+    if(keywords) html += `<h4 style="margin:14px 0 8px">🏷 建議關鍵字</h4><div style="padding:12px;background:var(--surface2);border-radius:8px;font-size:13px">${escapeHtml(keywords)}</div>`;
+    $('#specResult').innerHTML = html;
+  }catch(e){
+    $('#specResult').innerHTML = `<div class="alert alert-err">檢查失敗：${escapeHtml(e.message)}</div>`;
+  }finally{
+    btn.disabled = false;
+    btn.innerHTML = '🔍 執行檢查';
+  }
+}
+
+// ============ Mermaid 心智圖 ============
+function initMermaid(){
+  if(typeof mermaid !== 'undefined'){
+    mermaid.initialize({ startOnLoad: false, theme: 'default', securityLevel: 'loose' });
+  }
+}
+
+function buildMermaidSource(){
+  readMindForm();
+  const safe = s => s.replace(/[\[\](){}|;]/g, '_').slice(0, 40);
+  const title = safe(state.mind.title || '專題系統');
+  let src = `mindmap\n  root((${title}))\n`;
+  if(state.mind.inputs.length){
+    src += `    📥 INPUT\n`;
+    state.mind.inputs.forEach(x => src += `      ${safe(x)}\n`);
+  }
+  if(state.mind.processes.length){
+    src += `    ⚙️ PROCESS\n`;
+    state.mind.processes.forEach(x => src += `      ${safe(x)}\n`);
+  }
+  if(state.mind.outputs.length){
+    src += `    📊 OUTPUT\n`;
+    state.mind.outputs.forEach(x => src += `      ${safe(x)}\n`);
+  }
+  return src;
+}
+
+async function renderMermaidMind(){
+  readMindForm();
+  if(!state.mind.inputs.length && !state.mind.processes.length && !state.mind.outputs.length){
+    toast('請先填寫心智圖內容', 'warn');
+    return;
+  }
+  const src = buildMermaidSource();
+  $('#mermaidMindSource').value = src;
+  const container = $('#mermaidMindContainer');
+  container.innerHTML = '<div class="spinner"></div> 渲染中...';
+  try{
+    const id = 'mermaid_' + Date.now();
+    const { svg } = await mermaid.render(id, src);
+    container.innerHTML = svg;
+    $('#mermaidMindCard').style.display = '';
+    $('#mermaidMindCard').scrollIntoView({behavior:'smooth', block:'start'});
+  }catch(e){
+    container.innerHTML = `<div class="alert alert-err">Mermaid 渲染失敗：${escapeHtml(e.message)}<br>原始碼仍可複製使用。</div>`;
+    $('#mermaidMindCard').style.display = '';
+  }
+}
+
+function downloadMermaidMd(){
+  const src = $('#mermaidMindSource').value;
+  const md = `# ${state.mind.title} — Mind Map (Mermaid)\n\n\`\`\`mermaid\n${src}\n\`\`\`\n`;
+  const name = (state.mind.title || 'project').replace(/[^\w\u4e00-\u9fa5-]+/g, '_');
+  downloadBlob(md, `${name}_mindmap.md`);
+  trackExport('md');
+}
+
+// ============ 樹狀心智圖 SVG ============
+function renderMindmapTree(){
+  readMindForm();
+  if(!state.mind.inputs.length && !state.mind.processes.length && !state.mind.outputs.length){
+    toast('請先填寫心智圖內容', 'warn'); return;
+  }
+  const W = 900, H = Math.max(500, (Math.max(state.mind.inputs.length, state.mind.processes.length, state.mind.outputs.length) + 1) * 60);
+  const cx = W / 2, cy = H / 2;
+  const branches = [
+    { name:'📥 INPUT', items: state.mind.inputs, color:'#3b82f6', angle: -Math.PI },
+    { name:'⚙️ PROCESS', items: state.mind.processes, color:'#a855f7', angle: -Math.PI/2 },
+    { name:'📊 OUTPUT', items: state.mind.outputs, color:'#ec4899', angle: 0 }
+  ];
+
+  let svg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${W} ${H}" style="max-width:100%;height:auto;font-family:'Microsoft JhengHei','Noto Sans CJK TC',sans-serif">`;
+  // Root
+  svg += `<defs><filter id="shadow"><feDropShadow dx="0" dy="2" stdDeviation="3" flood-opacity="0.2"/></filter></defs>`;
+  svg += `<circle cx="${cx}" cy="${cy}" r="60" fill="url(#rootGrad)" filter="url(#shadow)"/>`;
+  svg += `<defs><radialGradient id="rootGrad"><stop offset="0" stop-color="#a855f7"/><stop offset="1" stop-color="#3b82f6"/></radialGradient></defs>`;
+  const titleShort = (state.mind.title || '專題').slice(0, 10);
+  svg += `<text x="${cx}" y="${cy+5}" text-anchor="middle" fill="white" font-size="14" font-weight="700">${escapeHtml(titleShort)}</text>`;
+
+  branches.forEach((b, bi) => {
+    const baseAngle = [-Math.PI/2, 0, Math.PI/2][bi]; // up / right / down
+    const dirX = Math.cos(baseAngle);
+    const dirY = Math.sin(baseAngle);
+    // Branch hub position
+    const hx = cx + dirX * 180;
+    const hy = cy + dirY * 180;
+    // Line from root to hub
+    svg += `<path d="M ${cx + dirX*60} ${cy + dirY*60} Q ${cx + dirX*100} ${cy + dirY*100} ${hx} ${hy}" stroke="${b.color}" stroke-width="3" fill="none" opacity="0.6"/>`;
+    // Hub
+    svg += `<rect x="${hx - 70}" y="${hy - 22}" width="140" height="44" rx="22" fill="${b.color}" filter="url(#shadow)"/>`;
+    svg += `<text x="${hx}" y="${hy+5}" text-anchor="middle" fill="white" font-size="13" font-weight="700">${escapeHtml(b.name)}</text>`;
+    // Items radiate from hub
+    const count = b.items.length;
+    if(count === 0) return;
+    const spread = Math.min(Math.PI * 0.7, 0.4 + count * 0.18);
+    const start = baseAngle - spread/2;
+    b.items.forEach((item, i) => {
+      const a = count === 1 ? baseAngle : start + (spread * i / (count - 1));
+      const r = 180;
+      const ix = hx + Math.cos(a) * r;
+      const iy = hy + Math.sin(a) * r;
+      svg += `<path d="M ${hx + Math.cos(a)*60} ${hy + Math.sin(a)*22} Q ${hx + Math.cos(a)*100} ${hy + Math.sin(a)*60} ${ix} ${iy}" stroke="${b.color}" stroke-width="1.5" fill="none" opacity="0.4"/>`;
+      const textShort = item.slice(0, 14);
+      const tw = textShort.length * 13 + 16;
+      svg += `<rect x="${ix - tw/2}" y="${iy - 14}" width="${tw}" height="28" rx="14" fill="white" stroke="${b.color}" stroke-width="1.5"/>`;
+      svg += `<text x="${ix}" y="${iy+4}" text-anchor="middle" fill="${b.color}" font-size="12">${escapeHtml(textShort)}</text>`;
+    });
+  });
+  svg += `</svg>`;
+
+  $('#mindTreeContainer').innerHTML = svg;
+  $('#mindTreeCard').style.display = '';
+  $('#mindTreeCard').scrollIntoView({behavior:'smooth', block:'start'});
+}
+
+function downloadMindTreeSvg(){
+  const svg = $('#mindTreeContainer').innerHTML;
+  const name = (state.mind.title || 'project').replace(/[^\w\u4e00-\u9fa5-]+/g, '_');
+  downloadBlob(svg, `${name}_mindmap.svg`, 'image/svg+xml');
+}
+
+async function downloadMindTreePng(){
+  if(typeof html2canvas === 'undefined'){ toast('PNG 函式庫載入中', 'warn'); return; }
+  const target = $('#mindTreeContainer');
+  try{
+    const canvas = await html2canvas(target, { backgroundColor: '#fff', scale: 2 });
+    canvas.toBlob(blob => {
+      const name = (state.mind.title || 'project').replace(/[^\w\u4e00-\u9fa5-]+/g, '_');
+      downloadBlob(blob, `${name}_mindmap.png`, 'image/png');
+    });
+  }catch(e){ toast('PNG 生成失敗：'+e.message, 'err'); }
+}
+
+// ============ PDF 匯出 ============
+function getPdfDoc(){
+  // jsPDF is loaded as window.jspdf.jsPDF
+  const { jsPDF } = window.jspdf;
+  return new jsPDF({ unit:'pt', format:'a4' });
+}
+
+function downloadIpoPdf(){
+  try{
+    const doc = getPdfDoc();
+    // jsPDF base font doesn't support CJK by default; use simple Latin approach with chinese fallback
+    // We'll use addFileToVFS / addFont if needed. For now, render as HTML through autoTable.
+    doc.setFontSize(18);
+    doc.text(state.mind.title || 'Project', 40, 50);
+    doc.setFontSize(11);
+    doc.text('IPO Structure Analysis', 40, 70);
+    if(state.mind.desc){
+      doc.setFontSize(10);
+      const lines = doc.splitTextToSize(state.mind.desc, 500);
+      doc.text(lines, 40, 90);
+    }
+
+    const head = [['Stage', 'Item', 'Note']];
+    const body = state.ipo.rows.map(r => [
+      {input:'INPUT', process:'PROCESS', output:'OUTPUT'}[r.stage],
+      r.name,
+      r.note || '-'
+    ]);
+
+    doc.autoTable({
+      head, body,
+      startY: 120,
+      theme: 'striped',
+      headStyles: { fillColor:[168,85,247], textColor:255, fontStyle:'bold' },
+      styles: { font:'helvetica', fontSize:10, cellPadding:6 },
+      columnStyles: { 0:{cellWidth:80,fontStyle:'bold'}, 1:{cellWidth:200}, 2:{cellWidth:'auto'} },
+      didParseCell: (data) => {
+        // Color stage column
+        if(data.column.index === 0 && data.section === 'body'){
+          const colors = {INPUT:[59,130,246], PROCESS:[168,85,247], OUTPUT:[236,72,153]};
+          const c = colors[data.cell.raw];
+          if(c) data.cell.styles.textColor = c;
+        }
+      }
+    });
+
+    const name = (state.mind.title || 'project').replace(/[^\w\u4e00-\u9fa5-]+/g, '_');
+    doc.save(`${name}_IPO.pdf`);
+    trackExport('pdf');
+    toast('PDF 已下載（中文若顯示有問題，建議使用 .docx）', 'ok');
+  }catch(e){
+    toast('PDF 生成失敗：'+e.message, 'err');
+  }
+}
+
+function downloadScriptPdf(){
+  try{
+    const doc = getPdfDoc();
+    doc.setFontSize(18);
+    doc.text(state.mind.title || 'Project', 40, 50);
+    doc.setFontSize(12);
+    doc.text('Video Script', 40, 70);
+
+    let y = 100;
+    const sections = [
+      ['Script (Qi-Cheng-Zhuan-He)', state.video.script],
+      ['Narration', state.video.narration],
+      ['AI Video Prompts', state.video.prompts]
+    ];
+    for(const [title, content] of sections){
+      if(!content) continue;
+      if(y > 720){ doc.addPage(); y = 40; }
+      doc.setFontSize(13);
+      doc.setFont(undefined, 'bold');
+      doc.text(title, 40, y);
+      y += 18;
+      doc.setFontSize(9);
+      doc.setFont(undefined, 'normal');
+      const lines = doc.splitTextToSize(content, 510);
+      for(const line of lines){
+        if(y > 780){ doc.addPage(); y = 40; }
+        doc.text(line, 40, y);
+        y += 12;
+      }
+      y += 14;
+    }
+    const name = (state.mind.title || 'project').replace(/[^\w\u4e00-\u9fa5-]+/g, '_');
+    doc.save(`${name}_script.pdf`);
+    trackExport('pdf');
+    toast('PDF 已下載（中文若顯示有問題，建議使用 .md）', 'ok');
+  }catch(e){ toast('PDF 失敗：'+e.message, 'err'); }
+}
+
+// ============ Word 匯出 ============
+async function downloadIpoDocx(){
+  try{
+    if(typeof docx === 'undefined'){ toast('docx 函式庫載入中', 'warn'); return; }
+    const { Document, Packer, Paragraph, Table, TableRow, TableCell, TextRun, HeadingLevel, WidthType, AlignmentType, BorderStyle } = docx;
+
+    const paragraphs = [
+      new Paragraph({ text: state.mind.title || '專題', heading: HeadingLevel.TITLE }),
+      new Paragraph({ text: 'IPO 結構分析', heading: HeadingLevel.HEADING_2 }),
+      new Paragraph({ text: state.mind.desc || '', spacing: { after: 200 } })
+    ];
+
+    const stageLbl = {input:'📥 INPUT', process:'⚙️ PROCESS', output:'📊 OUTPUT'};
+    const stageColors = {input:'3B82F6', process:'A855F7', output:'EC4899'};
+
+    for(const stage of ['input','process','output']){
+      const rows = state.ipo.rows.filter(r=>r.stage===stage);
+      if(!rows.length) continue;
+      paragraphs.push(new Paragraph({ text: stageLbl[stage], heading: HeadingLevel.HEADING_2 }));
+      const tableRows = [
+        new TableRow({ children: [
+          new TableCell({ children:[new Paragraph({children:[new TextRun({text:'項目', bold:true, color:'FFFFFF'})]})], shading:{fill:stageColors[stage]}, width:{size:30, type:WidthType.PERCENTAGE} }),
+          new TableCell({ children:[new Paragraph({children:[new TextRun({text:'說明', bold:true, color:'FFFFFF'})]})], shading:{fill:stageColors[stage]}, width:{size:70, type:WidthType.PERCENTAGE} })
+        ]})
+      ];
+      rows.forEach(r => tableRows.push(new TableRow({ children:[
+        new TableCell({ children:[new Paragraph(r.name)] }),
+        new TableCell({ children:[new Paragraph(r.note || '-')] })
+      ]})));
+      paragraphs.push(new Table({ rows: tableRows, width:{size:100, type:WidthType.PERCENTAGE} }));
+      paragraphs.push(new Paragraph({ text:'' }));
+    }
+
+    const doc = new Document({ sections: [{ children: paragraphs }] });
+    const blob = await Packer.toBlob(doc);
+    const name = (state.mind.title || 'project').replace(/[^\w\u4e00-\u9fa5-]+/g, '_');
+    downloadBlob(blob, `${name}_IPO.docx`);
+    trackExport('docx');
+    toast('Word 文件已下載', 'ok');
+  }catch(e){ toast('Word 失敗：'+e.message, 'err'); }
+}
+
+// ============ Chart.js OUTPUT 預覽 ============
+let chartInstance = null;
+
+function openChartDemo(){
+  const card = $('#chartDemoCard');
+  card.style.display = '';
+  const outs = state.ipo.rows.filter(r=>r.stage==='output');
+  const sel = $('#chartOutput');
+  sel.innerHTML = outs.map((r,i)=>`<option value="${i}">${escapeHtml(r.name)}</option>`).join('');
+  if(!outs.length){
+    sel.innerHTML = '<option>（無 OUTPUT 項目）</option>';
+    return;
+  }
+  renderDemoChart();
+  card.scrollIntoView({behavior:'smooth', block:'start'});
+}
+
+function renderDemoChart(){
+  if(typeof Chart === 'undefined'){ return; }
+  const type = $('#chartType').value;
+  const outIdx = parseInt($('#chartOutput').value) || 0;
+  const outs = state.ipo.rows.filter(r=>r.stage==='output');
+  if(!outs.length) return;
+  const out = outs[outIdx];
+
+  // Generate demo data based on PROCESS items (use as categories)
+  const procs = state.ipo.rows.filter(r=>r.stage==='process').slice(0, 6);
+  const labels = procs.length ? procs.map(p=>p.name.slice(0,8)) : ['類別 A','類別 B','類別 C','類別 D','類別 E'];
+  const values = labels.map(() => Math.round(20 + Math.random() * 80));
+
+  const colors = ['#3b82f6','#a855f7','#ec4899','#22c55e','#f59e0b','#06b6d4'];
+
+  if(chartInstance) chartInstance.destroy();
+  const ctx = document.getElementById('demoChart').getContext('2d');
+
+  const baseConfig = {
+    type: type,
+    data: {
+      labels: labels,
+      datasets: [{
+        label: out.name,
+        data: values,
+        backgroundColor: type === 'pie' || type === 'radar' ? colors : colors[0],
+        borderColor: type === 'line' ? colors[0] : colors,
+        borderWidth: 2,
+        fill: type === 'radar'
+      }]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: {
+        title: { display:true, text: out.name, font:{size:16} },
+        legend: { position: 'bottom' }
+      }
+    }
+  };
+  if(type === 'radar'){
+    baseConfig.data.datasets[0].backgroundColor = 'rgba(168,85,247,0.2)';
+    baseConfig.data.datasets[0].borderColor = '#a855f7';
+  }
+  chartInstance = new Chart(ctx, baseConfig);
+}
+
+function downloadChartPng(){
+  if(!chartInstance){ return; }
+  const url = chartInstance.toBase64Image();
+  const a = document.createElement('a');
+  a.href = url;
+  const name = (state.mind.title || 'chart').replace(/[^\w\u4e00-\u9fa5-]+/g, '_');
+  a.download = `${name}_chart.png`;
+  a.click();
+}
+
+// ============ TTS ============
+let ttsUtter = null;
+
+function openTtsModal(){
+  if(typeof speechSynthesis === 'undefined'){
+    toast('您的瀏覽器不支援語音合成', 'err');
+    return;
+  }
+  $('#ttsModal').classList.add('show');
+  loadTtsVoices();
+  updateTtsPreview();
+}
+
+function loadTtsVoices(){
+  const voices = speechSynthesis.getVoices();
+  if(!voices.length){
+    setTimeout(loadTtsVoices, 200);
+    return;
+  }
+  const sel = $('#ttsVoice');
+  sel.innerHTML = voices.map(v => `<option value="${v.name}">${v.name} (${v.lang})</option>`).join('');
+  // Default to Chinese voice if available
+  const zhVoice = voices.find(v => v.lang.startsWith('zh'));
+  if(zhVoice) sel.value = zhVoice.name;
+}
+
+function updateTtsPreview(){
+  const src = $('#ttsSource').value;
+  let text = '';
+  if(src === 'narration') text = state.video.narration;
+  else if(src === 'script') text = state.video.script;
+  else if(src === 'desc') text = state.mind.desc;
+  // Strip time markers and brackets for cleaner TTS
+  text = (text || '').replace(/\[\d+:\d+-\d+:\d+\]/g, '').replace(/【[^】]+】/g, '').replace(/起|承|轉|合/g, '').trim();
+  $('#ttsText').value = text || '（無內容可朗讀）';
+}
+
+function ttsPlay(){
+  if(ttsUtter && !speechSynthesis.paused){
+    speechSynthesis.cancel();
+  }
+  if(speechSynthesis.paused){
+    speechSynthesis.resume();
+    return;
+  }
+  const text = $('#ttsText').value;
+  if(!text || text === '（無內容可朗讀）'){ toast('無內容', 'warn'); return; }
+  ttsUtter = new SpeechSynthesisUtterance(text);
+  const voiceName = $('#ttsVoice').value;
+  const voices = speechSynthesis.getVoices();
+  const voice = voices.find(v => v.name === voiceName);
+  if(voice) ttsUtter.voice = voice;
+  ttsUtter.rate = parseFloat($('#ttsRate').value);
+  ttsUtter.pitch = parseFloat($('#ttsPitch').value);
+  speechSynthesis.speak(ttsUtter);
+}
+function ttsPause(){ speechSynthesis.pause(); }
+function ttsStop(){ speechSynthesis.cancel(); ttsUtter = null; }
+function closeTtsModal(){ ttsStop(); closeModal('ttsModal'); }
+
+// ============ QR Code ============
+function openQrModal(){
+  $('#qrModal').classList.add('show');
+  // Pre-fill with sensible default
+  const qrInput = $('#qrText');
+  if(!qrInput.value){
+    qrInput.value = `https://github.com/your-username/${(state.mind.title || 'project').replace(/[^\w-]+/g, '_').slice(0,30)}`;
+  }
+}
+
+function generateQr(){
+  const text = $('#qrText').value.trim();
+  if(!text){ toast('請輸入內容', 'warn'); return; }
+  const size = parseInt($('#qrSize').value);
+  const level = $('#qrLevel').value;
+  const result = $('#qrResult');
+  result.innerHTML = '<div class="spinner"></div> 生成中...';
+
+  QRCode.toCanvas(text, { width: size, errorCorrectionLevel: level, margin: 2 }, (err, canvas) => {
+    if(err){
+      result.innerHTML = `<div class="alert alert-err">${escapeHtml(err.message)}</div>`;
+      return;
+    }
+    result.innerHTML = '';
+    canvas.style.maxWidth = '100%';
+    canvas.style.height = 'auto';
+    canvas.style.borderRadius = '10px';
+    canvas.style.boxShadow = '0 8px 24px rgba(0,0,0,0.3)';
+    result.appendChild(canvas);
+    const dl = document.createElement('div');
+    dl.className = 'btn-row';
+    dl.style.justifyContent = 'center';
+    dl.innerHTML = `<button class="btn btn-primary" onclick="downloadQr()">⬇ 下載 PNG</button>`;
+    result.appendChild(dl);
+    result._canvas = canvas;
+  });
+}
+
+function downloadQr(){
+  const canvas = $('#qrResult')._canvas;
+  if(!canvas) return;
+  canvas.toBlob(blob => {
+    downloadBlob(blob, 'qrcode.png', 'image/png');
+  });
+}
+
+/* ===================================================================
+   v3 擴充：教學中心、QR、學習後測問卷
+   —— 以下 3 個設定區可自由編輯，更新後重新整理頁面即生效 ——
+   =================================================================== */
+
+// ① 教學影片與 PDF 講義（videoId 填 YouTube 影片網址中 v= 後面那串；pdf 填講義網址或相對路徑如 ./docs/m1.pdf）
+const TUTORIALS = {
+  channel: 'https://www.youtube.com/channel/UCxSRyHQ7kWg', // ← 你的教學頻道（請補完整）
+  modules: [
+    { step:1, icon:'🧠', title:'模組 1｜心智圖拆解', sub:'三分支 INPUT / PROCESS / OUTPUT', videoId:'', pdf:'' },
+    { step:2, icon:'🔀', title:'模組 2｜IPO 模組化',  sub:'轉換為輸入–處理–輸出結構表',     videoId:'', pdf:'' },
+    { step:3, icon:'🐍', title:'模組 3｜Python 演算法', sub:'框架生成 ＋ AI 優化',           videoId:'', pdf:'' },
+    { step:5, icon:'🎬', title:'模組 4｜應用影音情境化', sub:'起承轉合 ＋ 旁白 ＋ 字幕',      videoId:'', pdf:'' },
+  ]
+};
+
+// ② 三大 QR 連結（請把 survey 與 youtube 換成完整網址）
+const LINKS = {
+  site:    { color:'#16a34a', label:'🟢 官方網站',     url:'https://pjkuo.github.io/AI-empower-system' },
+  survey:  { color:'#15803d', label:'🟩 學習成效問卷', url:'https://script.google.com/macros/s/AKfyc.../exec' },
+  youtube: { color:'#dc2626', label:'🔴 YouTube 教學', url:'https://www.youtube.com/channel/UCxSRyHQ7kWg' },
+};
+
+// ③ 學習後測問卷（8 構面、40 題）
+const LIKERT = [
+  {v:1,t:'非常不同意'},{v:2,t:'不同意'},{v:3,t:'普通'},{v:4,t:'同意'},{v:5,t:'非常同意'}
+];
+const QUIZ = [
+  { id:'A', badge:'區塊一', title:'基本資料', map:'背景變項', type:'demo', items:[
+    {id:'A1', text:'身分別', options:['大學／專科生','研究生','高中職生','在職人士','教師','其他']},
+    {id:'A2', text:'目前學制／年級', options:['一年級','二年級','三年級','四年級','研究所','不適用']},
+    {id:'A3', text:'性別', options:['男','女','不願透露']},
+    {id:'A4', text:'先前程式設計經驗', options:['完全沒有','初階（會基本語法）','中階（能獨立完成小專案）','進階（熟練多種工具）']},
+    {id:'A5', text:'過去使用 AI 工具輔助學習的頻率', options:['從未使用','偶爾使用','經常使用','每天使用']},
+  ]},
+  { id:'B', badge:'區塊二', title:'心智圖拆解', map:'平台模組 1', type:'likert', items:[
+    {id:'B1', text:'我能運用三分支（輸入／處理／輸出）結構，清楚拆解專題問題。'},
+    {id:'B2', text:'心智圖模組幫助我釐清專題的核心要素與邏輯關係。'},
+    {id:'B3', text:'透過心智圖，我更容易找出專題中尚未考慮到的面向。'},
+    {id:'B4', text:'我能將模糊的構想轉化為具體、可執行的項目。'},
+  ]},
+  { id:'C', badge:'區塊三', title:'IPO 模組化', map:'平台模組 2', type:'likert', items:[
+    {id:'C1', text:'我理解如何將心智圖轉換為 IPO（輸入–處理–輸出）結構表。'},
+    {id:'C2', text:'IPO 模組化讓我能以系統化的方式描述專題流程。'},
+    {id:'C3', text:'透過 IPO 表，我能清楚界定每個模組的功能與介面。'},
+    {id:'C4', text:'模組化思維提升了我規劃專題整體架構的能力。'},
+  ]},
+  { id:'D', badge:'區塊四', title:'Python 演算法', map:'平台模組 3', type:'likert', items:[
+    {id:'D1', text:'我能依據 IPO 結構撰寫或理解對應的 Python 程式框架。'},
+    {id:'D2', text:'平台生成的程式碼幫助我建立演算法的邏輯雛形。'},
+    {id:'D3', text:'AI 優化建議讓我更了解如何改善程式的效能與可讀性。'},
+    {id:'D4', text:'我對運用 Python 解決專題問題更有信心。'},
+  ]},
+  { id:'E', badge:'區塊五', title:'應用影音情境化', map:'平台模組 4', type:'likert', items:[
+    {id:'E1', text:'我能將專題成果轉化為清楚的影音腳本（起承轉合）。'},
+    {id:'E2', text:'影音腳本模組幫助我以情境化方式呈現專題的價值。'},
+    {id:'E3', text:'我能為專題撰寫合適的旁白與字幕。'},
+    {id:'E4', text:'透過影音化，我更能向他人有效傳達專題成果。'},
+  ]},
+  { id:'F', badge:'區塊六', title:'4C 素養', map:'Communication／Collaboration／Creativity／Critical Thinking', type:'likert', items:[
+    {id:'F1',  text:'〔溝通〕我能清楚地向他人說明我的專題構想與成果。'},
+    {id:'F2',  text:'〔溝通〕我能依不同對象調整表達的方式與內容。'},
+    {id:'F3',  text:'〔溝通〕我能運用多元媒介（文字／圖表／影音）傳達想法。'},
+    {id:'F4',  text:'〔協作〕我能在團隊中有效分工並承擔自己的責任。'},
+    {id:'F5',  text:'〔協作〕我能傾聽並整合團隊成員不同的意見。'},
+    {id:'F6',  text:'〔協作〕遇到分歧時，我能與夥伴協商出共識。'},
+    {id:'F7',  text:'〔創造〕我能為專題問題提出新穎且可行的構想。'},
+    {id:'F8',  text:'〔創造〕我願意嘗試不同的方法來解決同一個問題。'},
+    {id:'F9',  text:'〔創造〕我能將既有元素重新組合，創造新的應用。'},
+    {id:'F10', text:'〔批判〕我能分析問題的關鍵因素並判斷其重要性。'},
+    {id:'F11', text:'〔批判〕我會檢視資訊來源的可信度與證據的合理性。'},
+    {id:'F12', text:'〔批判〕我能根據邏輯與證據評估不同方案的優劣。'},
+  ]},
+  { id:'G', badge:'區塊七', title:'平台體驗 TAM', map:'科技接受度', type:'likert', items:[
+    {id:'G1', text:'我覺得這個平台對完成專題很有幫助。'},
+    {id:'G2', text:'使用這個平台讓我的學習更有效率。'},
+    {id:'G3', text:'這個平台的操作介面簡單、容易學習。'},
+    {id:'G4', text:'我能輕鬆上手平台的各項功能。'},
+    {id:'G5', text:'未來我願意繼續使用這個平台進行學習。'},
+  ]},
+  { id:'H', badge:'區塊八', title:'開放回饋', map:'質性補充（選填）', type:'open', items:[
+    {id:'H1', text:'你認為這個平台最有幫助的部分是什麼？為什麼？'},
+    {id:'H2', text:'你建議平台還可以增加或改善哪些功能？'},
+  ]},
+];
+// 構面分組（用於計分與雷達圖）
+const QUIZ_CONSTRUCTS = [
+  { key:'心智圖拆解', ids:['B1','B2','B3','B4'] },
+  { key:'IPO 模組化', ids:['C1','C2','C3','C4'] },
+  { key:'Python 演算法', ids:['D1','D2','D3','D4'] },
+  { key:'應用影音情境化', ids:['E1','E2','E3','E4'] },
+  { key:'溝通 Communication', ids:['F1','F2','F3'] },
+  { key:'協作 Collaboration', ids:['F4','F5','F6'] },
+  { key:'創造 Creativity', ids:['F7','F8','F9'] },
+  { key:'批判 Critical Thinking', ids:['F10','F11','F12'] },
+  { key:'平台體驗 TAM', ids:['G1','G2','G3','G4','G5'] },
+];
+const QUIZ_4C = ['溝通 Communication','協作 Collaboration','創造 Creativity','批判 Critical Thinking'];
+
+const QUIZ_TOTAL = QUIZ.reduce((n,s)=>n+s.items.length,0); // 40
+// 需作答（必填）：基本資料 + 所有 Likert；開放題選填
+const QUIZ_REQUIRED = QUIZ.filter(s=>s.type!=='open').reduce((n,s)=>n+s.items.length,0);
+
+/* ---------- 教學中心 ---------- */
+let _tutBuilt = false;
+function renderTutorialCenter(){
+  const grid = $('#tutGrid');
+  if(grid && !_tutBuilt){
+    grid.innerHTML = TUTORIALS.modules.map((m,i)=>{
+      const embed = m.videoId
+        ? `<div class="video-wrap"><iframe src="https://www.youtube.com/embed/${m.videoId}" title="${escapeHtml(m.title)}" allow="accelerometer;autoplay;clipboard-write;encrypted-media;gyroscope;picture-in-picture" allowfullscreen></iframe></div>`
+        : `<div class="video-wrap"><div class="video-empty">🎬 尚未設定此模組影片<br><a href="${TUTORIALS.channel}" target="_blank" rel="noopener" style="color:var(--accent2)">前往教學頻道 ↗</a></div></div>`;
+      const pdfBtn = m.pdf
+        ? `<button class="btn" onclick="showPdf(${i})">📄 線上預覽 PDF</button><a class="btn btn-ghost" href="${m.pdf}" target="_blank" rel="noopener" download>⬇ 下載講義</a>`
+        : `<button class="btn" disabled title="尚未設定 PDF">📄 PDF 講義（未設定）</button>`;
+      return `<div class="tut-card">
+        <div class="tut-head"><div class="tut-ic">${m.icon}</div><div><div class="tut-t">${escapeHtml(m.title)}</div><div class="tut-s">${escapeHtml(m.sub)}</div></div></div>
+        ${embed}
+        <div class="tut-actions"><button class="btn btn-ghost" onclick="goStep(${m.step})">↪ 前往此模組實作</button>${pdfBtn}</div>
+      </div>`;
+    }).join('');
+    // PDF 分頁
+    const tabs = $('#pdfTabs');
+    if(tabs) tabs.innerHTML = TUTORIALS.modules.map((m,i)=>
+      `<button class="btn ${m.pdf?'':'btn-ghost'}" ${m.pdf?'':'disabled'} onclick="showPdf(${i})">${m.icon} ${escapeHtml(m.title.split('｜')[1]||m.title)}</button>`).join('');
+    _tutBuilt = true;
+  }
+  renderQrGrid();
+}
+
+function showPdf(i){
+  const m = TUTORIALS.modules[i];
+  const v = $('#pdfViewer');
+  if(!m || !m.pdf){ v.innerHTML = '<div class="alert alert-info">此模組尚未設定 PDF 連結。</div>'; return; }
+  v.innerHTML = `<iframe class="pdf-frame" src="${m.pdf}" title="${escapeHtml(m.title)}"></iframe>`;
+  toast(`已載入「${m.title}」講義`, 'ok');
+}
+
+let _qrBuilt = false;
+function renderQrGrid(){
+  const grid = $('#qrGrid');
+  if(!grid || _qrBuilt) return;
+  const items = [LINKS.site, LINKS.survey, LINKS.youtube];
+  grid.innerHTML = items.map((it,i)=>
+    `<div class="qr-card"><div class="qr-label"><span class="qr-dot" style="background:${it.color}"></span>${escapeHtml(it.label)}</div><div id="qrBox${i}"></div><div class="qr-url">${escapeHtml(it.url)}</div></div>`).join('');
+  items.forEach((it,i)=>{
+    QRCode.toCanvas(it.url, { width:180, margin:2, color:{ dark:it.color, light:'#ffffff' }, errorCorrectionLevel:'M' }, (err,canvas)=>{
+      const box = document.getElementById('qrBox'+i);
+      if(err){ if(box) box.innerHTML = '<div class="alert alert-err" style="font-size:11px">QR 生成失敗</div>'; return; }
+      if(box) box.appendChild(canvas);
+    });
+  });
+  _qrBuilt = true;
+}
+
+// 在各模組面板標題列加入「教學影片」快捷鈕
+function injectModuleHelpButtons(){
+  TUTORIALS.modules.forEach(m=>{
+    const panel = document.getElementById('panel-'+m.step);
+    if(!panel) return;
+    const head = panel.querySelector('.page-header');
+    if(!head || head.querySelector('.tut-quick')) return;
+    const b = document.createElement('button');
+    b.className = 'btn btn-ghost tut-quick';
+    b.style.cssText = 'margin-top:10px;font-size:12px;padding:6px 12px';
+    b.textContent = '📖 觀看此模組教學影片';
+    b.onclick = ()=> goStep(6);
+    head.appendChild(b);
+  });
+}
+
+/* ---------- 學習後測問卷 ---------- */
+let _quizRadar = null;
+function buildQuiz(){
+  const form = $('#quizForm');
+  if(!form) return;
+  if(form.dataset.built !== '1'){
+    const a = state.quiz.answers || {};
+    form.innerHTML = QUIZ.map(sec=>{
+      const itemsHtml = sec.items.map(it=>{
+        if(sec.type==='likert'){
+          const opts = LIKERT.map(l=>{
+            const sel = String(a[it.id])===String(l.v) ? 'sel':'';
+            return `<label class="${sel}" data-q="${it.id}" data-v="${l.v}"><input type="radio" name="${it.id}" value="${l.v}" ${sel?'checked':''}><span class="lk-n">${l.v}</span><span class="lk-t">${l.t}</span></label>`;
+          }).join('');
+          return `<div class="q-item" data-q="${it.id}"><div class="q-text"><span class="q-no">${it.id}</span>${escapeHtml(it.text)}<span class="req">*</span></div><div class="likert">${opts}</div></div>`;
+        }
+        if(sec.type==='demo'){
+          const opts = '<option value="">— 請選擇 —</option>' + it.options.map(o=>`<option ${a[it.id]===o?'selected':''}>${escapeHtml(o)}</option>`).join('');
+          return `<div class="q-item" data-q="${it.id}"><div class="q-text"><span class="q-no">${it.id}</span>${escapeHtml(it.text)}<span class="req">*</span></div><select name="${it.id}" onchange="onQuizChange()">${opts}</select></div>`;
+        }
+        // open
+        return `<div class="q-item" data-q="${it.id}"><div class="q-text"><span class="q-no">${it.id}</span>${escapeHtml(it.text)}</div><textarea name="${it.id}" placeholder="（選填）請輸入你的想法…" oninput="onQuizChange()">${a[it.id]?escapeHtml(a[it.id]):''}</textarea></div>`;
+      }).join('');
+      return `<div class="quiz-sec"><div class="quiz-sec-head"><span class="qs-badge">${sec.badge}</span><span class="qs-title">${escapeHtml(sec.title)}</span><span class="qs-map">· ${escapeHtml(sec.map)}</span></div>${itemsHtml}</div>`;
+    }).join('');
+    // Likert 點選事件（委派）
+    form.addEventListener('click', e=>{
+      const lab = e.target.closest('.likert label');
+      if(!lab) return;
+      const q = lab.dataset.q;
+      form.querySelectorAll(`.likert label[data-q="${q}"]`).forEach(l=>l.classList.remove('sel'));
+      lab.classList.add('sel');
+      const radio = lab.querySelector('input'); if(radio) radio.checked = true;
+      const item = lab.closest('.q-item'); if(item) item.classList.remove('missing');
+      onQuizChange();
+    });
+    form.dataset.built = '1';
+  }
+  updateQuizProgress();
+}
+
+function collectQuiz(){
+  const form = $('#quizForm');
+  const ans = {};
+  QUIZ.forEach(sec=>sec.items.forEach(it=>{
+    const el = form.querySelector(`[name="${it.id}"]`);
+    if(sec.type==='likert'){
+      const checked = form.querySelector(`input[name="${it.id}"]:checked`);
+      if(checked) ans[it.id] = Number(checked.value);
+    } else if(el && el.value!=='' ){
+      ans[it.id] = el.value;
+    }
+  }));
+  return ans;
+}
+
+function onQuizChange(){
+  state.quiz.answers = collectQuiz();
+  saveState();
+  updateQuizProgress();
+}
+
+function updateQuizProgress(){
+  const ans = collectQuiz();
+  const done = Object.keys(ans).length;
+  $('#quizDone').textContent = done;
+  $('#quizTotal').textContent = QUIZ_TOTAL;
+  const pct = Math.round(done / QUIZ_TOTAL * 100);
+  $('#quizBar').style.width = pct + '%';
+  $('#quizPct').textContent = pct + '%';
+}
+
+function saveQuizDraft(){
+  onQuizChange();
+  toast('草稿已暫存於本機瀏覽器', 'ok');
+}
+
+function submitQuiz(){
+  const ans = collectQuiz();
+  state.quiz.answers = ans;
+  // 驗證必填
+  const missing = [];
+  QUIZ.filter(s=>s.type!=='open').forEach(sec=>sec.items.forEach(it=>{
+    if(ans[it.id]===undefined || ans[it.id]==='') missing.push(it.id);
+  }));
+  document.querySelectorAll('#quizForm .q-item').forEach(el=>el.classList.remove('missing'));
+  if(missing.length){
+    missing.forEach(id=>{ const el = document.querySelector(`#quizForm .q-item[data-q="${id}"]`); if(el) el.classList.add('missing'); });
+    const first = document.querySelector(`#quizForm .q-item[data-q="${missing[0]}"]`);
+    if(first) first.scrollIntoView({behavior:'smooth', block:'center'});
+    toast(`還有 ${missing.length} 題必填未完成（已標紅）`, 'warn');
+    return;
+  }
+  state.quiz.submittedAt = new Date().toISOString();
+  saveState();
+  renderQuizResult(ans);
+  toast('問卷已送出，下方為你的結果摘要', 'ok');
+}
+
+function constructScores(ans){
+  return QUIZ_CONSTRUCTS.map(c=>{
+    const vals = c.ids.map(id=>ans[id]).filter(v=>typeof v==='number');
+    const mean = vals.length ? vals.reduce((a,b)=>a+b,0)/vals.length : 0;
+    return { key:c.key, mean:Math.round(mean*100)/100 };
+  });
+}
+
+function renderQuizResult(ans){
+  const scores = constructScores(ans);
+  const card = $('#quizResultCard');
+  card.style.display = 'block';
+  $('#quizScores').innerHTML = scores.map(s=>
+    `<div class="score-row"><span>${escapeHtml(s.key)}</span><b>${s.mean.toFixed(2)}</b></div>`).join('');
+  // 4C 雷達
+  const c4 = scores.filter(s=>QUIZ_4C.includes(s.key));
+  const ctx = document.getElementById('quiz4cRadar').getContext('2d');
+  if(_quizRadar) _quizRadar.destroy();
+  _quizRadar = new Chart(ctx, {
+    type:'radar',
+    data:{ labels:c4.map(s=>s.key), datasets:[{ label:'我的 4C 平均', data:c4.map(s=>s.mean),
+      fill:true, backgroundColor:'rgba(168,85,247,.2)', borderColor:'#a855f7', pointBackgroundColor:'#ec4899' }]},
+    options:{ responsive:true, scales:{ r:{ min:0, max:5, ticks:{ stepSize:1, color:'#94a3b8', backdropColor:'transparent' },
+      grid:{ color:'rgba(148,163,184,.2)' }, angleLines:{ color:'rgba(148,163,184,.2)' },
+      pointLabels:{ color:'#e2e8f0', font:{ size:11 } } } },
+      plugins:{ legend:{ labels:{ color:'#e2e8f0' } } } }
+  });
+  card.scrollIntoView({behavior:'smooth', block:'start'});
+}
+
+function quizRows(ans){
+  const rows = [];
+  QUIZ.forEach(sec=>sec.items.forEach(it=>{
+    rows.push({ section:sec.title, id:it.id, question:it.text.replace(/\s+/g,' '), answer: ans[it.id]!==undefined?ans[it.id]:'' });
+  }));
+  return rows;
+}
+
+function exportQuizCsv(){
+  const ans = collectQuiz();
+  const rows = quizRows(ans);
+  const esc = s => `"${String(s).replace(/"/g,'""')}"`;
+  let csv = '\uFEFF' + ['構面','題號','題目','作答'].map(esc).join(',') + '\n';
+  csv += rows.map(r=>[r.section,r.id,r.question,r.answer].map(esc).join(',')).join('\n');
+  // 構面平均附於末
+  csv += '\n\n' + esc('構面平均') + '\n';
+  csv += constructScores(ans).map(s=>[s.key, s.mean].map(esc).join(',')).join('\n');
+  downloadBlob(csv, 'learning_survey_result.csv', 'text/csv;charset=utf-8');
+  toast('已下載 CSV', 'ok');
+}
+
+function exportQuizJson(){
+  const ans = collectQuiz();
+  const payload = {
+    project: state.mind.title || '',
+    submittedAt: state.quiz.submittedAt || new Date().toISOString(),
+    answers: ans,
+    constructScores: constructScores(ans)
+  };
+  downloadBlob(JSON.stringify(payload, null, 2), 'learning_survey_result.json', 'application/json');
+  toast('已下載 JSON', 'ok');
+}
+
+function openSurveyLink(){
+  const url = LINKS.survey.url;
+  if(!url || url.includes('AKfyc...')){
+    toast('請先在程式碼 LINKS.survey 填入完整的 Google 表單／Apps Script 網址', 'warn');
+    return;
+  }
+  window.open(url, '_blank', 'noopener');
+}
+
+
+</script>
+</body>
+</html>

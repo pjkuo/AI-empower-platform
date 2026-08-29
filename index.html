@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1.0">
-<title>智慧專題創作平台 ｜ 心智圖 → IPO → Python → PPT → 影音腳本</title>
+<title>智慧專題創作平台 ｜ 心智圖 → IPO → Python → PPT → 影片</title>
 <script src="https://cdn.jsdelivr.net/gh/gitbrent/pptxgenjs@3.12.0/dist/pptxgen.bundle.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/jszip@3.10.1/dist/jszip.min.js"></script>
@@ -294,7 +294,8 @@ table.ipo-table{width:100%;border-collapse:collapse;background:var(--surface2);b
 <!-- ============ Sidebar ============ -->
 <aside class="sidebar">
   <div class="brand">智慧專題創作平台</div>
-  <div class="brand-sub">Mind Map → IPO → Python → PPT → Video Script</div>
+  <div class="brand-sub">Mind Map → IPO → Python → PPT → Video</div>
+  <div id="identityCard" style="margin-top:12px;padding:10px;background:var(--surface2);border-radius:8px;border:1px solid var(--border2)"></div>
 
   <!-- 專題切換器 -->
   <div style="margin:14px 0 18px;padding:10px;background:var(--surface2);border-radius:8px;border:1px solid var(--border2)">
@@ -345,8 +346,8 @@ table.ipo-table{width:100%;border-collapse:collapse;background:var(--surface2);b
     <button class="step-item" data-step="5" onclick="goStep(5)">
       <div class="step-num">5</div>
       <div class="step-info">
-        <div class="step-name">影音腳本</div>
-        <div class="step-desc">起承轉合 + 旁白 + 字幕</div>
+        <div class="step-name">影片製作</div>
+        <div class="step-desc">腳本 + 字幕 + 直接產出影片</div>
       </div>
       <div class="step-check" id="check5"></div>
     </button>
@@ -357,7 +358,8 @@ table.ipo-table{width:100%;border-collapse:collapse;background:var(--surface2);b
     <div class="ai-status" id="aiStatus">
       <span class="dot"></span><span id="aiStatusText">尚未設定</span>
     </div>
-    <button class="sidebar-btn" onclick="openAISettings()">⚙ 設定 AI 金鑰</button>
+    <button class="sidebar-btn" onclick="openAISettings()">⚙ 設定 AI（班級碼／金鑰／離線）</button>
+    <div class="ai-status" id="cloudStatus" style="margin-top:8px"><span class="dot"></span><span id="cloudStatusText">雲端：未連線</span></div>
   </div>
 
   <div class="sidebar-section">
@@ -366,6 +368,7 @@ table.ipo-table{width:100%;border-collapse:collapse;background:var(--surface2);b
     <button class="sidebar-btn" onclick="document.getElementById('importInput').click()">📥 匯入專案</button>
     <input type="file" id="importInput" style="display:none" accept=".json" onchange="importProject(event)">
     <button class="sidebar-btn" onclick="loadDemoData()">📚 載入示範資料</button>
+    <button class="sidebar-btn" style="color:#c4b5fd" onclick="goStep(1);runFullPipelineDemo()">🚀 一鍵示範全流程</button>
     <button class="sidebar-btn" onclick="openDashboard()">📊 學習儀表板</button>
     <button class="sidebar-btn" onclick="clearAllData()" style="color:#fca5a5">🗑 清除所有資料</button>
   </div>
@@ -377,7 +380,7 @@ table.ipo-table{width:100%;border-collapse:collapse;background:var(--surface2);b
   </div>
 
   <div class="sidebar-section" style="font-size:10px;color:var(--dim);line-height:1.5">
-    整合自五大模組：心智圖→IPO 轉換、IPO 分析器、PPT 生成器、影音腳本生成器、AI CT 平台。所有資料儲存於瀏覽器本地。
+    v4：心智圖→IPO→Python（瀏覽器內執行）→PPT→影片，全流程可離線完成；AI 可由老師代管。資料儲存於瀏覽器本地，進度回報至 AI 賦能 Hub。
   </div>
 </aside>
 
@@ -421,10 +424,29 @@ table.ipo-table{width:100%;border-collapse:collapse;background:var(--surface2);b
   <div class="btn-row">
     <button class="btn btn-primary" onclick="saveMindAndAdvance()">💾 儲存並進入下一步 →</button>
     <button class="btn" onclick="saveMindOnly()">💾 僅儲存草稿</button>
-    <button class="btn btn-accent" onclick="aiEnrichMind()">✨ AI 補充建議</button>
+    <button class="btn btn-accent" onclick="generateMindOneClick()">🪄 一鍵生成心智圖</button>
     <button class="btn btn-accent" onclick="aiReviewMind()">🔍 AI 審稿</button>
     <button class="btn" onclick="renderMindmapTree()">🌳 樹狀視覺化</button>
     <button class="btn" onclick="renderMermaidMind()">🧠 Mermaid 心智圖</button>
+  </div>
+
+  <!-- 心智圖圖片（Canvas） -->
+  <div class="card" id="mindCanvasCard" style="display:none">
+    <div class="card-title">🖼 心智圖成品</div>
+    <div class="card-desc">依三分支自動繪製的心智圖，會放進簡報與影片；也可下載 PNG。</div>
+    <img id="mindCanvasPreview" alt="心智圖" style="width:100%;border-radius:10px;background:#fff">
+    <div class="btn-row">
+      <button class="btn" onclick="downloadMindCanvasPng()">⬇ 下載 PNG</button>
+      <button class="btn" onclick="captureMindmapAsset();toast('已重新繪製','ok')">🔄 重新繪製</button>
+    </div>
+  </div>
+
+  <!-- 一鍵全流程 -->
+  <div class="card">
+    <div class="card-title">🚀 一鍵示範全流程</div>
+    <div class="card-desc">填好專題名稱後按下：自動生成心智圖 → IPO 表 → Python 程式 → 在瀏覽器執行 → 簡報大綱 → 影音腳本。之後再下載 PPTX、製作影片、打包成果。</div>
+    <button class="btn btn-primary" onclick="runFullPipelineDemo()">🚀 開始全流程</button>
+    <div id="pipelineStatus" style="display:none;margin-top:12px;padding:12px;background:var(--surface2);border-radius:8px;font-size:13px;line-height:2"></div>
   </div>
 
   <!-- AI 審稿結果 -->
@@ -480,6 +502,7 @@ table.ipo-table{width:100%;border-collapse:collapse;background:var(--surface2);b
       <button class="btn" onclick="addIpoRow('input')">+ 新增 INPUT</button>
       <button class="btn" onclick="addIpoRow('process')">+ 新增 PROCESS</button>
       <button class="btn" onclick="addIpoRow('output')">+ 新增 OUTPUT</button>
+      <button class="btn btn-accent" onclick="autoFillIpoNotes()">✨ 自動補充說明</button>
     </div>
   </div>
 
@@ -513,7 +536,7 @@ table.ipo-table{width:100%;border-collapse:collapse;background:var(--surface2);b
 <section class="panel" id="panel-3">
   <header class="page-header">
     <h1 class="page-title">③ Python 程式碼</h1>
-    <div class="page-sub">基於 IPO 結構自動生成 Python 程式骨架。可選擇離線模板或 AI 智慧優化。</div>
+    <div class="page-sub">基於 IPO 結構自動生成「可直接執行」的 Python 程式，並可在瀏覽器內執行、看到實際輸出與圖表。</div>
   </header>
 
   <div class="card">
@@ -522,8 +545,8 @@ table.ipo-table{width:100%;border-collapse:collapse;background:var(--surface2);b
       <div class="field">
         <label>生成方式</label>
         <select id="codeMode">
-          <option value="template">📐 離線模板（即時，免金鑰）</option>
-          <option value="ai">🤖 AI 智慧生成（需 API 金鑰，含具體實作邏輯）</option>
+          <option value="template">📐 可執行模板（即時，免 AI；含模擬資料、統計、圖表）</option>
+          <option value="ai">🤖 AI 智慧生成（需老師代管或金鑰，含具體實作邏輯）</option>
         </select>
       </div>
       <div class="field">
@@ -558,9 +581,19 @@ table.ipo-table{width:100%;border-collapse:collapse;background:var(--surface2);b
       <button class="btn" onclick="copyCode()">📋 複製程式碼</button>
       <button class="btn" onclick="downloadCode()">⬇ 下載 .py</button>
       <button class="btn" onclick="downloadIpynb()">⬇ 下載 .ipynb</button>
+      <button class="btn btn-ok" onclick="runPythonInBrowser()">▶ 在瀏覽器執行</button>
       <button class="btn btn-accent" onclick="aiReviewCode()">🐛 AI 找 Bug</button>
       <button class="btn" onclick="openChartDemo()">📊 OUTPUT 圖表預覽</button>
     </div>
+  </div>
+
+  <!-- 執行結果 -->
+  <div class="card" id="runResultCard" style="display:none">
+    <div class="card-title">▶ 執行結果（瀏覽器內 Python）</div>
+    <div class="card-desc" id="runStatus">準備中...</div>
+    <pre class="code-box" id="runStdout" style="max-height:360px;overflow:auto;white-space:pre-wrap"></pre>
+    <div id="runCharts" class="grid-2" style="margin-top:14px"></div>
+    <div class="alert alert-info" style="margin-top:12px">執行結果與圖表已存入專題：簡報會自動加入「執行結果」與「成果圖表」頁，影片第三幕會播放這些圖。修改程式碼後可再次執行。</div>
   </div>
 
   <!-- AI Code 審查 -->
@@ -664,9 +697,14 @@ table.ipo-table{width:100%;border-collapse:collapse;background:var(--surface2);b
 <!-- ===== Step 5: Video Script ===== -->
 <section class="panel" id="panel-5">
   <header class="page-header">
-    <h1 class="page-title">⑤ 影音腳本與旁白</h1>
-    <div class="page-sub">起承轉合四幕結構，含旁白逐字稿、畫面建議、SRT/VTT 字幕、AI 影片生成提示語。</div>
+    <h1 class="page-title">⑤ 影片製作</h1>
+    <div class="page-sub">先生成起承轉合腳本與旁白（AI 或離線），再直接在瀏覽器把心智圖、執行結果、字幕與音樂錄成影片檔。</div>
   </header>
+
+  <div class="card">
+    <div class="card-title">🏁 成果總覽</div>
+    <div id="progressOverview"></div>
+  </div>
 
   <div class="card">
     <div class="card-title">🎬 影片參數</div>
@@ -700,7 +738,7 @@ table.ipo-table{width:100%;border-collapse:collapse;background:var(--surface2);b
       <div class="field"><label>承｜秒</label><input type="number" id="vidT2" value="20" min="5" max="120"></div>
       <div class="field"><label>轉｜秒</label><input type="number" id="vidT3" value="20" min="5" max="120"></div>
     </div>
-    <button class="btn btn-primary" onclick="generateScript()">🎬 生成影音腳本（需 AI）</button>
+    <button class="btn btn-primary" onclick="generateScript()">🎬 生成影音腳本</button>
   </div>
 
   <div class="card" id="scriptResultCard" style="display:none">
@@ -734,6 +772,32 @@ table.ipo-table{width:100%;border-collapse:collapse;background:var(--surface2);b
       <button class="btn" onclick="downloadScriptPdf()">⬇ 下載 PDF 腳本</button>
       <button class="btn btn-accent" onclick="openTtsModal()">🔊 TTS 朗讀旁白</button>
       <button class="btn btn-accent" onclick="openQrModal()">📱 生成 QR 碼</button>
+    </div>
+  </div>
+
+  <!-- 影片製作 -->
+  <div class="card" id="videoMakerCard" style="display:none">
+    <div class="card-title">🎞 製作影片（瀏覽器內直接產出 .webm）</div>
+    <div class="card-desc">四幕畫面：① 專題開場 ② 心智圖＋IPO ③ 程式執行結果與圖表 ④ 成果與行動呼籲。字幕依旁白逐字稿燒錄，可加背景音樂與麥克風旁白（照著提詞機唸）。</div>
+    <div class="grid-3">
+      <label style="display:flex;align-items:center;gap:8px;text-transform:none;font-size:13px"><input type="checkbox" id="vidBgm" checked style="width:auto"> 🎵 背景音樂（合成）</label>
+      <label style="display:flex;align-items:center;gap:8px;text-transform:none;font-size:13px"><input type="checkbox" id="vidMic" style="width:auto"> 🎙 麥克風錄旁白（照提詞機唸）</label>
+      <div style="font-size:12px;color:var(--muted)">錄製時間 = 影片長度（上方「影片總長度」）</div>
+    </div>
+    <div style="background:#000;border-radius:10px;overflow:hidden;margin-top:12px"><canvas id="videoCanvas" width="1280" height="720" style="width:100%;display:block"></canvas></div>
+    <div id="teleprompter" style="margin-top:10px;padding:10px 14px;background:var(--surface2);border-radius:8px;font-size:14px;line-height:1.6;min-height:52px"></div>
+    <div id="videoProgressWrap" style="display:none;margin-top:10px">
+      <div class="bar" style="height:8px;background:var(--surface2);border-radius:4px;overflow:hidden"><i id="videoProgressBar" style="display:block;height:100%;width:0;background:linear-gradient(90deg,#3b82f6,#a855f7)"></i></div>
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-top:6px"><span id="videoProgressText" style="font-size:12px;color:var(--muted)"></span><button class="btn btn-ghost" onclick="abortVideo()">⏹ 提前結束</button></div>
+    </div>
+    <div class="btn-row">
+      <button class="btn btn-primary" id="btnMakeVideo" onclick="makeVideo()">🎞 製作影片</button>
+      <button class="btn" id="btnPreviewVideo" onclick="previewVideoWithTTS()">▶ 預覽（TTS 旁白）</button>
+      <button class="btn" onclick="downloadVideo()">⬇ 下載影片 .webm</button>
+    </div>
+    <div id="videoPreviewWrap" style="display:none;margin-top:12px">
+      <video id="videoPreview" controls style="width:100%;border-radius:10px;background:#000"></video>
+      <div id="videoInfo" class="alert alert-info" style="margin-top:10px"></div>
     </div>
   </div>
 
@@ -829,11 +893,26 @@ table.ipo-table{width:100%;border-collapse:collapse;background:var(--surface2);b
     <div class="field">
       <label>選擇 AI 提供者</label>
       <select id="aiProvider" onchange="updateAIModelHint()">
-        <option value="gemini">Google Gemini（免費額度大，推薦）</option>
+        <option value="proxy">🏫 老師代管（輸入班級碼即可，推薦）</option>
+        <option value="gemini">Google Gemini（自備金鑰，免費額度大）</option>
         <option value="anthropic">Anthropic Claude（最高品質）</option>
         <option value="openai">OpenAI GPT</option>
+        <option value="offline">📴 離線模式（不呼叫 AI，用內建規則引擎）</option>
       </select>
     </div>
+    <div id="aiProxyFields">
+      <div class="field">
+        <label>班級碼（老師公布）</label>
+        <input type="text" id="aiClassCode" placeholder="例：MIS2026">
+      </div>
+      <div class="field">
+        <label>老師代管網址（Apps Script /exec，老師已預設則免填）</label>
+        <input type="text" id="aiProxyUrl" placeholder="https://script.google.com/macros/s/.../exec">
+        <div style="font-size:11px;color:var(--muted);margin-top:6px">金鑰由老師保管在雲端，學生端不會看到金鑰；每位學生每日有使用上限。</div>
+      </div>
+    </div>
+    <div id="aiOfflineHint" class="alert alert-info" style="display:none">離線模式下，心智圖、IPO 說明、Python 程式、影音腳本皆由內建規則引擎產生，全部功能仍可走完；設定 AI 後內容會更貼近你的主題。</div>
+    <div id="aiKeyFields">
     <div class="field">
       <label>API 金鑰</label>
       <input type="password" id="aiApiKey" placeholder="貼上你的 API key">
@@ -843,6 +922,7 @@ table.ipo-table{width:100%;border-collapse:collapse;background:var(--surface2);b
       <label>模型名稱</label>
       <input type="text" id="aiModel" placeholder="留空使用預設">
       <div id="aiModelHint" style="font-size:11px;color:var(--muted);margin-top:6px"></div>
+    </div>
     </div>
     <div class="btn-row">
       <button class="btn btn-primary" onclick="saveAISettings()">💾 儲存設定</button>
@@ -1042,7 +1122,10 @@ let state = {
     vtt: ''
   },
   completed: { 1: false, 2: false, 3: false, 4: false, 5: false },
-  quiz: { answers: {}, submittedAt: null }
+  quiz: { answers: {}, submittedAt: null },
+  assets: {},   // v4：心智圖 PNG 等圖片資產
+  run: null,    // v4：Python 執行結果 {stdout, charts[]}
+  log: []       // v4：學習歷程／雲端回報紀錄
 };
 
 let aiConfig = {
@@ -1217,8 +1300,8 @@ function saveMindAndAdvance(){
 async function aiEnrichMind(){
   readMindForm();
   if(!state.mind.title){ toast('請先填寫專題名稱'); return; }
-  if(!aiConfig.apiKey){ toast('請先在側邊欄設定 AI 金鑰', 'warn'); openAISettings(); return; }
-  const btn = event.target;
+  if(!aiReady()){ toast('請先在側邊欄設定 AI 金鑰', 'warn'); openAISettings(); return; }
+  const btn = (typeof event !== 'undefined' && event && event.target) || document.createElement('button');
   btn.disabled = true;
   btn.innerHTML = '<span class="spinner"></span> AI 生成中...';
   try{
@@ -1375,7 +1458,7 @@ async function generateCode(){
     return;
   }
 
-  const btn = event.target;
+  const btn = (typeof event !== 'undefined' && event && event.target) || document.createElement('button');
   btn.disabled = true;
   btn.innerHTML = '<span class="spinner"></span> 生成中...';
 
@@ -1387,7 +1470,7 @@ async function generateCode(){
       state.code.process = code.process;
       state.code.output = code.output;
     } else {
-      if(!aiConfig.apiKey){
+      if(!aiReady()){
         toast('AI 模式需要設定 API 金鑰', 'warn');
         openAISettings();
         return;
@@ -1420,85 +1503,313 @@ function buildTemplateCode(lang){
 }
 
 function buildPythonTemplate(desc, inputs, procs, outs){
+  // ---- v4：可直接執行的 Python（Pyodide / Colab / 本機皆可跑）----
+  const py = s => JSON.stringify(String(s||'')).replace(/\\u([0-9a-f]{4})/g, (m,h)=>String.fromCharCode(parseInt(h,16)));
+  const kw = (s, re) => re.test(s || '');
+
+  // INPUT 欄位型別推斷
+  const inputSpecs = inputs.map((x, i) => {
+    const n = x.name;
+    if(kw(n, /日期|時間|月份|年度|時段|timestamp/i)) return { name:n, col:n, kind:'date' };
+    if(kw(n, /姓名|名稱|種類|類別|類型|分類|型號|地點|區域|地區|部門|班級|科系|品項|品牌|使用者|人員|廠商|店|站|語言|書目|標籤|狀態|性別|身分/)) return { name:n, col:n, kind:'cat' };
+    let lo = 20, hi = 80, unit = '';
+    if(kw(n, /溫/)) { lo = 18; hi = 35; unit = '°C'; }
+    else if(kw(n, /溼|濕/)) { lo = 30; hi = 90; unit = '%'; }
+    else if(kw(n, /價|金額|成本|費用|營收|薪|預算/)) { lo = 50; hi = 500; unit = '元'; }
+    else if(kw(n, /分數|成績|評分|滿意/)) { lo = 40; hi = 100; unit = '分'; }
+    else if(kw(n, /工時|時數|時間|分鐘|小時|耗時/)) { lo = 1; hi = 10; unit = '小時'; }
+    else if(kw(n, /數量|人數|次數|件數|筆數|庫存|流量|點閱/)) { lo = 5; hi = 120; unit = '筆'; }
+    else if(kw(n, /速度|速率/)) { lo = 10; hi = 90; unit = 'km/h'; }
+    else if(kw(n, /面積/)) { lo = 100; hi = 2000; unit = 'm²'; }
+    else if(kw(n, /電|能耗|功率|用量/)) { lo = 50; hi = 400; unit = 'kWh'; }
+    else if(kw(n, /心率|心跳/)) { lo = 55; hi = 130; unit = 'bpm'; }
+    else if(kw(n, /步數/)) { lo = 1000; hi = 15000; unit = '步'; }
+    return { name:n, col:n, kind:'num', lo, hi, unit };
+  });
+  if(!inputSpecs.length) inputSpecs.push({ name:'觀測值', col:'觀測值', kind:'num', lo:20, hi:80, unit:'' });
+
   const inputCode = `# ============================================================
-# 📥 INPUT 模組：輸入條件與資料載入
+# 📥 INPUT 模組：輸入資料（每個 INPUT 項目 = 一個欄位）
 # ============================================================
-from dataclasses import dataclass
-from typing import Any, Dict, List
-import pandas as pd
-import numpy as np
+# 目前以「模擬資料」示範，讓程式可以直接執行；
+# 實務上請改成：df = pd.read_csv("data.csv")  或 從感測器 / API 讀取。
+INPUT_FIELDS = [
+${inputSpecs.map(s=>`    ${py(s.name)},`).join('\n')}
+]
 
-
-@dataclass
-class InputConfig:
-    """輸入參數配置 — 依 IPO 設計"""
-${inputs.map((x,i)=>`    field_${i+1}: Any = None  # ${x.name}${x.note?' — '+x.note:''}`).join('\n')}
-
-
-def load_input_data(config: InputConfig) -> pd.DataFrame:
-    """載入並驗證輸入資料
-
-    TODO: 學生需驗證資料完整性與型別
-    步驟：
-      1. 讀取資料來源（CSV/API/感測器）
-      2. 檢查缺失值
-      3. 型別轉換與正規化
-    """
-    raise NotImplementedError("請學生實作資料載入邏輯")
+def load_input_data(n: int = 120) -> pd.DataFrame:
+    """載入（模擬）輸入資料，回傳 DataFrame，n = 筆數"""
+    df = pd.DataFrame({"編號": range(1, n + 1)})
+${inputSpecs.map(s=>{
+  if(s.kind==='cat') return `    df[${py(s.col)}] = np.random.choice(["A 組", "B 組", "C 組"], n)  # 類別型`;
+  if(s.kind==='date') return `    df[${py(s.col)}] = pd.date_range("2026-01-01", periods=n, freq="D")  # 日期型`;
+  return `    df[${py(s.col)}] = np.round(np.random.uniform(${s.lo}, ${s.hi}, n), 2)  # 數值型${s.unit?'（'+s.unit+'）':''}`;
+}).join('\n')}
+    # 刻意放入少量缺失值，讓「資料清洗」步驟有事可做
+    num_cols = df.select_dtypes(include="number").columns.drop("編號", errors="ignore")
+    for c in num_cols:
+        df.loc[df.sample(frac=0.05, random_state=1).index, c] = np.nan
+    print(f"✓ INPUT：載入 {len(df)} 筆資料，欄位 = {list(df.columns)}")
+    return df
 `;
+
+  // PROCESS 步驟 → 對應可執行邏輯
+  const procBodies = procs.map((p, i) => {
+    const n = p.name; const fn = `process_step_${i+1}`;
+    let body;
+    if(kw(n, /清洗|缺失|遺漏|補值|前處理|預處理|去除|重複/)){
+      body = `    num_cols = df.select_dtypes(include="number").columns
+    before = int(df[num_cols].isna().sum().sum())
+    df[num_cols] = df[num_cols].fillna(df[num_cols].mean())   # 以平均值補缺失
+    df = df.drop_duplicates()
+    RESULTS["缺失值補值筆數"] = before
+    print(f"  → 補值 {before} 個缺失值，剩餘 {len(df)} 筆")`;
+    } else if(kw(n, /檢定|t-test|顯著|假設|比較.*差異|差異/i)){
+      body = `    cat = _first_cat(df); num = _first_num(df)
+    g = df.groupby(cat)[num]
+    names = list(g.groups.keys())[:2]
+    a = df[df[cat] == names[0]][num].dropna().values
+    b = df[df[cat] == names[1]][num].dropna().values
+    t, p = _welch_t(a, b)
+    RESULTS["t 檢定"] = {"分組": names, "t": round(t, 3), "p": round(p, 4)}
+    print(f"  → {names[0]} vs {names[1]} 的「{num}」：t = {t:.3f}, p ≈ {p:.4f}（{'顯著' if p < 0.05 else '不顯著'}）")`;
+    } else if(kw(n, /模擬|蒙地卡羅|monte|情境|抽樣/i)){
+      body = `    num = _first_num(df)
+    vals = df[num].dropna().values
+    sims = np.array([np.random.choice(vals, len(vals)).mean() for _ in range(1000)])  # 1000 次重抽樣
+    lo, hi = np.percentile(sims, [2.5, 97.5])
+    RESULTS["模擬"] = {"欄位": num, "平均": round(float(sims.mean()), 2), "95%區間": [round(float(lo), 2), round(float(hi), 2)]}
+    print(f"  → 1000 次模擬：「{num}」平均 {sims.mean():.2f}，95% 區間 [{lo:.2f}, {hi:.2f}]")`;
+    } else if(kw(n, /預測|迴歸|回歸|趨勢|推估|forecast|regress/i)){
+      body = `    nums = _num_cols(df)
+    x = df[nums[0]].values; y = df[nums[1] if len(nums) > 1 else nums[0]].values
+    k, b = np.polyfit(x, y, 1)
+    r2 = float(np.corrcoef(x, y)[0, 1] ** 2) if len(nums) > 1 else 1.0
+    df["預測值"] = np.round(k * x + b, 2)
+    RESULTS["迴歸"] = {"x": nums[0], "y": nums[1] if len(nums) > 1 else nums[0], "斜率": round(float(k), 4), "R2": round(r2, 3)}
+    print(f"  → 線性迴歸：y = {k:.3f}x + {b:.2f}，R² = {r2:.3f}")`;
+    } else if(kw(n, /分類|分群|分級|等級|標籤|cluster|classif/i)){
+      body = `    num = _first_num(df)
+    df["等級"] = pd.qcut(df[num].rank(method="first"), 3, labels=["低", "中", "高"])
+    RESULTS["分級"] = df["等級"].value_counts().to_dict()
+    print(f"  → 依「{num}」分成三級：{RESULTS['分級']}")`;
+    } else if(kw(n, /排序|排名|推薦|篩選|挑選|top/i)){
+      body = `    num = _first_num(df)
+    top = df.sort_values(num, ascending=False).head(5)
+    RESULTS["前五名"] = top[["編號", num]].to_dict("records")
+    print(f"  → 依「{num}」排序，前五名編號：{top['編號'].tolist()}")`;
+    } else if(kw(n, /正規|標準化|轉換|編碼|縮放/)){
+      body = `    nums = _num_cols(df)
+    for c in nums:
+        df[c + "_z"] = ((df[c] - df[c].mean()) / (df[c].std() + 1e-9)).round(3)  # z 分數
+    print(f"  → 已標準化 {len(nums)} 個數值欄位（新增 _z 欄位）")`;
+    } else if(kw(n, /警示|門檻|判斷|偵測|異常|告警|提醒|超標/)){
+      body = `    num = _first_num(df)
+    thr = df[num].mean() + 2 * df[num].std()
+    df["異常"] = df[num] > thr
+    RESULTS["異常筆數"] = int(df["異常"].sum())
+    print(f"  → 「{num}」門檻 {thr:.2f}，偵測到 {RESULTS['異常筆數']} 筆異常")`;
+    } else if(kw(n, /效率|績效|指標|評估|評分|計分|加權/)){
+      body = `    nums = _num_cols(df)
+    z = (df[nums] - df[nums].mean()) / (df[nums].std() + 1e-9)
+    df["綜合指標"] = (50 + 10 * z.mean(axis=1)).round(1)   # 平均 50、標準差 10 的綜合分數
+    RESULTS["綜合指標平均"] = round(float(df["綜合指標"].mean()), 2)
+    print(f"  → 綜合指標平均 {df['綜合指標'].mean():.1f}（最高 {df['綜合指標'].max():.1f}）")`;
+    } else if(kw(n, /統計|平均|彙整|摘要|計算|分析|加總|累計/)){
+      body = `    nums = _num_cols(df)
+    summary = df[nums].agg(["mean", "std", "min", "max"]).round(2)
+    RESULTS["統計摘要"] = summary.to_dict()
+    print("  → 統計摘要：")
+    print(summary.to_string())`;
+    } else {
+      body = `    nums = _num_cols(df)
+    df["${n.slice(0,12).replace(/"/g,'')}_結果"] = df[nums].mean(axis=1).round(2)   # TODO：換成真正的處理邏輯
+    print(f"  → 已處理 {len(df)} 筆（示範：取數值欄平均）")`;
+    }
+    return `def ${fn}(df: pd.DataFrame) -> pd.DataFrame:
+    """${n}${p.note?' — '+p.note:''}"""
+    print("⚙️ PROCESS ${i+1}：${n}")
+${body}
+    return df
+`;
+  });
+  if(!procBodies.length) procBodies.push(`def process_step_1(df: pd.DataFrame) -> pd.DataFrame:
+    """（尚未定義處理步驟）"""
+    print("⚙️ PROCESS 1：統計摘要")
+    print(df.describe().round(2).to_string())
+    return df
+`);
 
   const processCode = `# ============================================================
-# ⚙️ PROCESS 模組：核心處理邏輯
+# ⚙️ PROCESS 模組：核心處理邏輯（每個 PROCESS 項目 = 一個函式）
 # ============================================================
-${procs.map((x,i)=>`def process_step_${i+1}(data: pd.DataFrame) -> pd.DataFrame:
-    """${x.name}${x.note?' — '+x.note:''}"""
-    # TODO: 學生實作此處理步驟
-    return data
-`).join('\n')}
+RESULTS = {}   # 各步驟的重要結果都放這裡，OUTPUT 會用到
 
-def run_pipeline(data: pd.DataFrame) -> pd.DataFrame:
-    """執行完整處理管線"""
-${procs.map((x,i)=>`    data = process_step_${i+1}(data)`).join('\n')}
-    return data
+def _num_cols(df):
+    cols = [c for c in df.select_dtypes(include="number").columns if c != "編號" and not c.endswith("_z")]
+    if not cols:   # 沒有任何數值欄位時，補一個示範用的數值指標
+        df["數值指標"] = np.round(np.random.uniform(20, 80, len(df)), 2)
+        cols = ["數值指標"]
+    return cols
+
+def _first_num(df):
+    return _num_cols(df)[0]
+
+def _first_cat(df):
+    cats = [c for c in df.columns if c != "編號"
+            and not pd.api.types.is_numeric_dtype(df[c])
+            and not pd.api.types.is_datetime64_any_dtype(df[c])]
+    if not cats:
+        df["分組"] = np.where(df[_first_num(df)] > df[_first_num(df)].median(), "高組", "低組")
+        cats = ["分組"]
+    return cats[0]
+
+def _welch_t(a, b):
+    """Welch t 檢定（p 值以常態近似，樣本大時足夠準確）"""
+    ma, mb = a.mean(), b.mean()
+    va, vb = a.var(ddof=1) / len(a), b.var(ddof=1) / len(b)
+    t = (ma - mb) / np.sqrt(va + vb + 1e-12)
+    from math import erf, sqrt
+    p = 2 * (1 - 0.5 * (1 + erf(abs(t) / sqrt(2))))
+    return float(t), float(p)
+
+${procBodies.join('\n')}
+
+def run_pipeline(df: pd.DataFrame) -> pd.DataFrame:
+    """依序執行所有處理步驟"""
+${procBodies.map((_, i)=>`    df = process_step_${i+1}(df)`).join('\n')}
+    return df
 `;
 
-  const outputCode = `# ============================================================
-# 📊 OUTPUT 模組：結果產出與視覺化
-# ============================================================
-# 中文字型設定（Colab 環境）
-# !apt-get -qq install fonts-noto-cjk
-import matplotlib.pyplot as plt
-from matplotlib import font_manager
-# font_manager.fontManager.addfont('/usr/share/fonts/opentype/noto/NotoSansCJK-Regular.ttc')
-plt.rcParams['font.sans-serif'] = ['Noto Sans CJK TC', 'Microsoft JhengHei', 'sans-serif']
-plt.rcParams['axes.unicode_minus'] = False
+  // OUTPUT
+  let chartEmitted = false;
+  const outBodies = outs.map((o, i) => {
+    const n = o.name; const fn = `generate_output_${i+1}`;
+    let body;
+    if(kw(n, /圓餅|比例圖|占比/)){
+      chartEmitted = true;
+      body = `    cat = _first_cat(df)
+    counts = df[cat].value_counts()
+    emit_chart("pie", ${py(n)}, counts.index.tolist(), counts.values.tolist())
+    print(f"  → 圓餅圖：{cat} 分布 {counts.to_dict()}")`;
+    } else if(kw(n, /折線|趨勢圖|時間序列|走勢/)){
+      chartEmitted = true;
+      body = `    num = _first_num(df)
+    series = df[num].rolling(10).mean().dropna().round(2)   # 10 筆移動平均
+    emit_chart("line", ${py(n)}, [str(i) for i in series.index[::5]], series.values[::5].tolist())
+    print(f"  → 折線圖：「{num}」移動平均，共 {len(series)} 點")`;
+    } else if(kw(n, /雷達|多維|構面/)){
+      chartEmitted = true;
+      body = `    nums = _num_cols(df)[:6]
+    means = [(df[c] - df[c].min()) / (df[c].max() - df[c].min() + 1e-9) for c in nums]
+    emit_chart("radar", ${py(n)}, nums, [float(m.mean()) * 100 for m in means])
+    print(f"  → 雷達圖：{len(nums)} 個構面")`;
+    } else if(kw(n, /散布|散佈|相關/)){
+      chartEmitted = true;
+      body = `    nums = _num_cols(df)
+    x, y = nums[0], (nums[1] if len(nums) > 1 else nums[0])
+    sample = df[[x, y]].dropna().head(40)
+    emit_chart("scatter", ${py(n)}, sample[x].round(1).tolist(), sample[y].round(1).tolist())
+    print(f"  → 散布圖：{x} vs {y}，相關係數 {df[x].corr(df[y]):.3f}")`;
+    } else if(kw(n, /圖|視覺化|長條|柱狀|儀表板|dashboard|chart/i)){
+      chartEmitted = true;
+      body = `    cat = _first_cat(df); num = _first_num(df)
+    means = df.groupby(cat)[num].mean().round(2)
+    emit_chart("bar", ${py(n)}, means.index.tolist(), means.values.tolist())
+    print(f"  → 長條圖：各「{cat}」的「{num}」平均 {means.to_dict()}")`;
+    } else if(kw(n, /百分比|比例|節省|提升|改善率|成長/)){
+      body = `    name = ${py(n)}
+    num = _first_num(df)
+    base, best = df[num].mean(), df[num].max()
+    pct = (best - base) / (abs(base) + 1e-9) * 100
+    RESULTS[${py(n)}] = round(float(pct), 1)
+    print(f"  → {name}：以「{num}」平均 {base:.2f} 為基準，最佳值可提升 {pct:.1f}%")`;
+    } else if(kw(n, /報表|報告|CSV|表格|清單|摘要|紀錄|明細/i)){
+      body = `    table = df.head(8).copy()
+    for c in table.select_dtypes(include="number").columns:
+        table[c] = table[c].round(2)
+    table.to_csv("output.csv", index=False, encoding="utf-8-sig")   # 匯出 CSV（瀏覽器內為虛擬檔案）
+    print("  → 報表前 8 筆（已另存 output.csv）：")
+    print(table.to_string(index=False))`;
+    } else if(kw(n, /建議|結論|決策|策略|方案|回饋/)){
+      body = `    num = _first_num(df)
+    hi = df.sort_values(num, ascending=False).head(3)["編號"].tolist()
+    lo = df.sort_values(num).head(3)["編號"].tolist()
+    print(f"  → 建議：「{num}」表現最佳的是編號 {hi}，最需改善的是編號 {lo}；")
+    print(f"     整體平均 {df[num].mean():.2f}，標準差 {df[num].std():.2f}，"
+          + ("差異偏大，建議先處理低分群。" if df[num].std() > df[num].mean() * 0.3 else "差異不大，可維持現行做法。"))`;
+    } else if(kw(n, /警示|通知|提醒|訊息|推播|LINE|簡訊/i)){
+      body = `    num = _first_num(df)
+    thr = df[num].mean() + 1.5 * df[num].std()
+    alerts = df[df[num] > thr]["編號"].tolist()
+    RESULTS["警示"] = alerts
+    print(f"  → 警示：「{num}」超過門檻 {thr:.2f} 的有 {len(alerts)} 筆 → {alerts[:10]}")`;
+    } else if(kw(n, /指標|效率|績效|KPI|成本|分數|評分/i)){
+      body = `    nums = _num_cols(df)[:5]
+    kpi = {c: round(float(df[c].mean()), 2) for c in nums}
+    RESULTS[${py(n)}] = kpi
+    for k, v in kpi.items():
+        print(f"  → {k}：{v}")`;
+    } else {
+      body = `    name = ${py(n)}
+    num = _first_num(df)
+    print(f"  → {name}：平均 {df[num].mean():.2f}、最大 {df[num].max():.2f}、最小 {df[num].min():.2f}")`;
+    }
+    return `def ${fn}(df: pd.DataFrame) -> None:
+    """${n}${o.note?' — '+o.note:''}"""
+    print("📊 OUTPUT ${i+1}：${n}")
+${body}
+`;
+  });
+  if(!outBodies.length) outBodies.push(`def generate_output_1(df: pd.DataFrame) -> None:
+    """（尚未定義輸出項目）"""
+    print("📊 OUTPUT 1：統計摘要")
+    print(df.describe().round(2).to_string())
+`);
+  if(!chartEmitted){
+    outBodies.push(`def generate_output_chart(df: pd.DataFrame) -> None:
+    """自動加上一張總覽圖（各數值欄位平均）"""
+    nums = _num_cols(df)[:6]
+    emit_chart("bar", "各項目平均值總覽", nums, [float(df[c].mean()) for c in nums])
+`);
+  }
 
-${outs.map((x,i)=>`def generate_output_${i+1}(result: pd.DataFrame) -> Dict:
-    """${x.name}${x.note?' — '+x.note:''}"""
-    return {"status": "TODO", "data": None}
-`).join('\n')}
+  const outputCode = `# ============================================================
+# 📊 OUTPUT 模組：結果產出與視覺化（每個 OUTPUT 項目 = 一個函式）
+# ============================================================
+def emit_chart(kind, title, labels, values):
+    """把圖表資料交給平台（瀏覽器用 Chart.js 畫圖，支援中文）。
+    在 Colab 想用 matplotlib 時，可改成 plt.bar(labels, values)。"""
+    print("@@CHART@@" + json.dumps({"kind": kind, "title": title,
+          "labels": [str(x) for x in labels], "values": [float(v) for v in values]}, ensure_ascii=False))
+
+${outBodies.join('\n')}
+def generate_all_outputs(df: pd.DataFrame) -> None:
+${outBodies.map(b=>'    '+b.match(/def (\w+)/)[1]+'(df)').join('\n')}
 `;
 
   const mainCode = `# ============================================================
-# 🚀 主程式入口
+# 🚀 主程式入口：INPUT → PROCESS → OUTPUT
 # ============================================================
 if __name__ == "__main__":
-    config = InputConfig(
-${inputs.map((x,i)=>`        field_${i+1}=None  # ${x.name}`).join(',\n')}
-    )
-    raw_data = load_input_data(config)
-    processed = run_pipeline(raw_data)
-${outs.map((x,i)=>`    output_${i+1} = generate_output_${i+1}(processed)`).join('\n')}
-
-    print("✓ Pipeline completed")
+    raw = load_input_data(n=120)
+    processed = run_pipeline(raw)
+    generate_all_outputs(processed)
+    print("\\n✓ Pipeline completed —", json.dumps(RESULTS, ensure_ascii=False, default=str)[:600])
 `;
 
   const header = `"""
 ${desc}
 
-本程式碼由「智慧專題創作平台」依 IPO 結構自動生成框架。
-請依「先思考、後驗證」原則：學生負責驗證邏輯、補完細節、調整參數。
+本程式由「智慧專題創作平台」依 IPO 結構自動生成，可直接執行
+（平台內 ▶ 執行、Google Colab、或本機 python）。
+先思考、後驗證：讀懂每個步驟的註解，改參數、看結果，再換成你的真實資料。
 """
+import json
+import numpy as np
+import pandas as pd
+
+np.random.seed(42)   # 固定隨機種子，讓每次結果一致
 
 `;
 
@@ -1780,7 +2091,7 @@ function refreshOutline(){
 
 async function buildAndDownloadPPTX(){
   refreshOutline();
-  const btn = event.target;
+  const btn = (typeof event !== 'undefined' && event && event.target) || document.createElement('button');
   btn.disabled = true;
   btn.innerHTML = '<span class="spinner"></span> 生成中...';
   try{
@@ -1918,13 +2229,13 @@ async function generateScript(){
   state.video.aud = $('#vidAud').value;
   state.video.style = $('#vidStyle').value;
 
-  if(!aiConfig.apiKey){
+  if(!aiReady()){
     toast('影音腳本生成需要 AI，請先設定金鑰', 'warn');
     openAISettings();
     return;
   }
 
-  const btn = event.target;
+  const btn = (typeof event !== 'undefined' && event && event.target) || document.createElement('button');
   btn.disabled = true;
   btn.innerHTML = '<span class="spinner"></span> 階段 1/3 生成腳本中...';
 
@@ -2160,7 +2471,7 @@ ${state.video.prompts}
 
 // ============ Final Export (zip everything) ============
 async function finalExport(){
-  const btn = event.target;
+  const btn = (typeof event !== 'undefined' && event && event.target) || document.createElement('button');
   btn.disabled = true;
   btn.innerHTML = '<span class="spinner"></span> 打包中...';
   try{
@@ -2301,7 +2612,7 @@ async function buildPPTXBlob(){
 
 // ============ AI Layer (unified call) ============
 async function callAI(systemPrompt, userMessage, maxTokens = 4000){
-  if(!aiConfig.apiKey) throw new Error('未設定 API 金鑰');
+  if(!aiReady()) throw new Error('未設定 AI（金鑰或班級碼）');
   const model = aiConfig.model || DEFAULT_MODELS[aiConfig.provider];
 
   if(aiConfig.provider === 'gemini'){
@@ -2422,7 +2733,7 @@ async function testAIConnection(){
   aiConfig.provider = $('#aiProvider').value;
   aiConfig.apiKey = $('#aiApiKey').value.trim();
   aiConfig.model = $('#aiModel').value.trim();
-  if(!aiConfig.apiKey){ toast('請先輸入金鑰', 'warn'); return; }
+  if(!aiReady()){ toast('請先輸入金鑰', 'warn'); return; }
   toast('測試中...');
   try{
     const r = await callAI('你是測試助手', '請回覆「連線正常」四字', 50);
@@ -2437,7 +2748,7 @@ async function testAIConnection(){
 function updateAIStatus(){
   const el = $('#aiStatus');
   const txt = $('#aiStatusText');
-  if(aiConfig.apiKey){
+  if(aiReady()){
     el.classList.add('ok');
     const provName = {gemini:'Gemini', anthropic:'Claude', openai:'OpenAI'}[aiConfig.provider];
     txt.textContent = `${provName} · 已設定`;
@@ -2635,7 +2946,8 @@ function switchProject(id, silent){
         code: { mode:'template', lang:'python', hint:'', full:'', input:'', process:'', output:'' },
         ppt: { theme:'academic', lang:'zh', author:'', outline:[] },
         video: { len:60, t1:10, t2:20, t3:20, aud:'一般大眾', style:'專業簡報', script:'', narration:'', prompts:'', srt:'', vtt:'' },
-        completed: { 1:false, 2:false, 3:false, 4:false, 5:false }
+        completed: { 1:false, 2:false, 3:false, 4:false, 5:false },
+        assets: {}, run: null, log: []
       });
       Object.assign(state, loaded);
     }catch(e){ console.warn(e); }
@@ -2648,7 +2960,8 @@ function switchProject(id, silent){
       code: { mode:'template', lang:'python', hint:'', full:'', input:'', process:'', output:'' },
       ppt: { theme:'academic', lang:'zh', author:'', outline:[] },
       video: { len:60, t1:10, t2:20, t3:20, aud:'一般大眾', style:'專業簡報', script:'', narration:'', prompts:'', srt:'', vtt:'' },
-      completed: { 1:false, 2:false, 3:false, 4:false, 5:false }
+      completed: { 1:false, 2:false, 3:false, 4:false, 5:false },
+      assets: {}, run: null, log: []
     });
   }
   // Repaint UI
@@ -2820,8 +3133,8 @@ function resetStats(){
 async function aiReviewMind(){
   readMindForm();
   if(!state.mind.title){ toast('請先填寫專題名稱', 'warn'); return; }
-  if(!aiConfig.apiKey){ openAISettings(); return; }
-  const btn = event.target;
+  if(!aiReady()){ openAISettings(); return; }
+  const btn = (typeof event !== 'undefined' && event && event.target) || document.createElement('button');
   btn.disabled = true;
   btn.innerHTML = '<span class="spinner"></span> 審稿中...';
   try{
@@ -2893,8 +3206,8 @@ function renderReviewResult(text, target){
 // ============ AI 審稿（IPO）============
 async function aiReviewIpo(){
   if(!state.ipo.rows.length){ toast('IPO 表為空', 'warn'); return; }
-  if(!aiConfig.apiKey){ openAISettings(); return; }
-  const btn = event.target;
+  if(!aiReady()){ openAISettings(); return; }
+  const btn = (typeof event !== 'undefined' && event && event.target) || document.createElement('button');
   btn.disabled = true;
   btn.innerHTML = '<span class="spinner"></span> 審查中...';
   try{
@@ -2944,8 +3257,8 @@ ${ipoText}
 // ============ AI 程式碼審查 ============
 async function aiReviewCode(){
   if(!state.code.full){ toast('請先生成程式碼', 'warn'); return; }
-  if(!aiConfig.apiKey){ openAISettings(); return; }
-  const btn = event.target;
+  if(!aiReady()){ openAISettings(); return; }
+  const btn = (typeof event !== 'undefined' && event && event.target) || document.createElement('button');
   btn.disabled = true;
   btn.innerHTML = '<span class="spinner"></span> 審查中...';
   try{
@@ -2995,8 +3308,8 @@ ${state.code.full.slice(0, 5000)}
 async function aiScorePresentation(){
   refreshOutline();
   if(!state.ppt.outline.length){ toast('大綱為空', 'warn'); return; }
-  if(!aiConfig.apiKey){ openAISettings(); return; }
-  const btn = event.target;
+  if(!aiReady()){ openAISettings(); return; }
+  const btn = (typeof event !== 'undefined' && event && event.target) || document.createElement('button');
   btn.disabled = true;
   btn.innerHTML = '<span class="spinner"></span> 評分中...';
   try{
@@ -3045,7 +3358,7 @@ ${outlineText}
 
 // ============ 翻譯 ============
 function openTranslateModal(){
-  if(!aiConfig.apiKey){ openAISettings(); return; }
+  if(!aiReady()){ openAISettings(); return; }
   $('#translateModal').classList.add('show');
   $('#translateResult').innerHTML = '';
 }
@@ -3065,7 +3378,7 @@ async function runTranslate(){
   if($('#trScript').checked) scopes.push('script');
   if(!scopes.length){ toast('請至少選一個翻譯範圍', 'warn'); return; }
 
-  const btn = event.target;
+  const btn = (typeof event !== 'undefined' && event && event.target) || document.createElement('button');
   btn.disabled = true;
   btn.innerHTML = '<span class="spinner"></span> 翻譯中...';
   const resultDiv = $('#translateResult');
@@ -3128,7 +3441,7 @@ function downloadTranslated(lang, data){
 
 // ============ 規格合規檢查 ============
 function openSpecCheckModal(){
-  if(!aiConfig.apiKey){ openAISettings(); return; }
+  if(!aiReady()){ openAISettings(); return; }
   $('#specModal').classList.add('show');
   $('#specResult').innerHTML = '';
 }
@@ -3144,7 +3457,7 @@ const SPEC_RULES = {
 async function runSpecCheck(){
   const target = $('#specTarget').value;
   const extra = $('#specExtra').value.trim();
-  const btn = event.target;
+  const btn = (typeof event !== 'undefined' && event && event.target) || document.createElement('button');
   btn.disabled = true;
   btn.innerHTML = '<span class="spinner"></span> 檢查中...';
 
@@ -3998,6 +4311,1163 @@ function openSurveyLink(){
 }
 
 
+
+// ===================================================================
+// v4：離線規則引擎（無 AI 也能完整走完流程）
+// ===================================================================
+const OFFLINE_DOMAINS = [
+  { re:/農|作物|灌溉|田|溫室|養殖|畜|果園|漁/, inputs:['土壤溼度感測器資料','氣象站氣溫與雨量紀錄','作物種類與栽種面積','作業人員工時紀錄','灌溉與施肥時間表'],
+    processes:['資料清洗與遺漏值補值','每日平均與統計摘要','灌溉需求門檻判斷','人工與自動作業效率比較（t 檢定）','未來一週需水量預測（迴歸）'],
+    outputs:['灌溉警示通知','每日環境趨勢折線圖','作業效率指標儀表板','統計摘要報表（CSV）','改善建議與情境模擬結果'] },
+  { re:/校園|學生|課程|教學|學習|考試|成績|作業|出席|選課|老師|教室/, inputs:['學生基本資料與班級','每週出席紀錄','作業與小考成績','課程學習時數','學習後測問卷分數'],
+    processes:['資料清洗與去重','各科平均與統計摘要','學習表現分級（高／中／低）','出席與成績相關分析（迴歸）','學習預警門檻判斷'],
+    outputs:['個人學習雷達圖','班級成績分布長條圖','學習預警名單通知','學期成績摘要報表（CSV）','個別化學習建議'] },
+  { re:/健康|醫|病|心率|血壓|運動|睡眠|飲食|體重|步數|健身|長照|照護/, inputs:['每日步數與運動時數','心率與血壓量測值','睡眠時數紀錄','飲食熱量紀錄','使用者基本資料（年齡、身高、體重）'],
+    processes:['資料清洗與異常值處理','每週平均與統計摘要','健康風險門檻判斷','運動量與睡眠相關分析','健康分數計算（加權指標）'],
+    outputs:['健康狀態雷達圖','每週趨勢折線圖','健康警示提醒','週報摘要（CSV）','個人化運動與作息建議'] },
+  { re:/交通|停車|車|路口|公車|捷運|通勤|物流|配送|導航|路況/, inputs:['車流量感測器資料','各路段平均車速','停車場車位使用狀態','天氣與時段資料','事故與施工通報紀錄'],
+    processes:['資料清洗與時間對齊','尖離峰車流統計','壅塞等級分級','車速趨勢預測（迴歸）','異常事件偵測'],
+    outputs:['即時壅塞警示','各路段車流長條圖','時段車速折線圖','每日交通摘要報表（CSV）','路線與號誌調整建議'] },
+  { re:/店|商|零售|餐|訂單|銷售|商品|庫存|顧客|客戶|行銷|電商|會員/, inputs:['每日訂單與銷售金額','商品品項與庫存數量','顧客會員資料','促銷活動時間表','顧客評價分數'],
+    processes:['交易資料清洗與去重','熱銷商品排序','顧客分群（RFM 分級）','銷售趨勢預測（迴歸）','庫存警示門檻判斷'],
+    outputs:['熱銷商品排行長條圖','各分群顧客占比圓餅圖','庫存不足警示通知','月銷售摘要報表（CSV）','行銷與補貨建議'] },
+  { re:/環境|空氣|水質|能源|電|碳|節能|溫室氣體|污染|噪音|廢棄|回收/, inputs:['空氣品質感測器資料（PM2.5）','溫溼度紀錄','用電量與用水量','設備運轉時數','天氣與時段資料'],
+    processes:['資料清洗與遺漏值補值','每日平均與統計摘要','超標門檻判斷與異常偵測','用電量趨勢預測（迴歸）','節能效益模擬（蒙地卡羅）'],
+    outputs:['環境品質即時警示','每日趨勢折線圖','各項指標雷達圖','月度摘要報表（CSV）','節能改善建議'] },
+  { re:/金融|股|理財|投資|記帳|支出|收入|預算|保險|貸款|匯率/, inputs:['每日收入與支出紀錄','消費類別與金額','投資標的價格','預算目標設定','帳戶餘額紀錄'],
+    processes:['資料清洗與分類編碼','各類別支出統計','超支門檻判斷','月支出趨勢預測（迴歸）','風險情境模擬（蒙地卡羅）'],
+    outputs:['支出類別占比圓餅圖','月收支趨勢折線圖','超支警示通知','月度財務摘要報表（CSV）','理財與省錢建議'] },
+  { re:/圖書|閱讀|書|借閱|館藏/, inputs:['讀者借閱紀錄','館藏書目與分類','讀者基本資料','借閱日期與歸還日期','書籍評分'],
+    processes:['借閱資料清洗','熱門書籍排序','讀者興趣分群','逾期歸還門檻判斷','借閱趨勢預測'],
+    outputs:['熱門書籍排行長條圖','分類借閱占比圓餅圖','逾期提醒通知','月借閱摘要報表（CSV）','個人化推薦書單'] },
+  { re:/社群|影音|影片|直播|粉絲|貼文|互動|平台|APP|app|網站/, inputs:['貼文與影片發布紀錄','觀看次數與互動數','粉絲基本資料','發布時段','留言情緒標籤'],
+    processes:['互動資料清洗','互動率統計','熱門內容排序','最佳發布時段分析','成長趨勢預測（迴歸）'],
+    outputs:['內容互動率長條圖','粉絲成長折線圖','熱門內容排行','週報摘要（CSV）','內容策略建議'] },
+  { re:/天氣|氣象|颱風|降雨|氣溫/, inputs:['氣溫與溼度觀測值','降雨量紀錄','風速與風向','氣壓觀測值','地區與時間'],
+    processes:['觀測資料清洗','每日統計摘要','豪雨門檻判斷','氣溫趨勢預測（迴歸）','異常天氣偵測'],
+    outputs:['豪雨警示通知','氣溫趨勢折線圖','各項指標雷達圖','每日天氣摘要報表（CSV）','出門與防災建議'] },
+  { re:/IoT|物聯網|感測|智慧家|家電|燈|門禁|監控|機器人|自動化|設備|機台|工廠|製造/i, inputs:['感測器即時讀值','設備運轉狀態紀錄','環境溫溼度','使用者操作紀錄','時間與地點'],
+    processes:['感測資料清洗與時間對齊','運轉時數統計','異常狀態偵測（門檻）','設備效率指標計算','故障風險預測（迴歸）'],
+    outputs:['設備異常警示通知','運轉狀態長條圖','效率指標雷達圖','每日運轉摘要報表（CSV）','維護排程建議'] },
+];
+
+const Offline = {
+  domainFor(title, desc){
+    const t = (title || '') + ' ' + (desc || '');
+    let best = null, bestN = 0;
+    OFFLINE_DOMAINS.forEach(d => { const n = (t.match(new RegExp(d.re.source, d.re.flags.includes('g') ? d.re.flags : d.re.flags + 'g')) || []).length; if(n > bestN){ best = d; bestN = n; } });
+    return best;
+  },
+  mind(title, desc, cur){
+    const d = this.domainFor(title, desc);
+    const T = (title || '專題').replace(/系統|平台|APP|app|應用|專題/g, '').trim().slice(0, 8) || '專題';
+    const generic = {
+      inputs:[`${T}相關的使用者基本資料`, `${T}每日觀測／紀錄資料`, `${T}類別與分組資料`, `時間與地點資料`, `使用者回饋評分`],
+      processes:['資料清洗與遺漏值補值', '每日統計摘要與平均', '表現分級（高／中／低）', '趨勢預測（迴歸）', '異常門檻判斷'],
+      outputs:[`${T}指標儀表板（長條圖）`, '趨勢折線圖', '異常警示通知', '摘要報表（CSV）', '改善建議']
+    };
+    const src = d || generic;
+    const merge = (mine, sug) => {
+      const out = [...(mine || [])];
+      for(const s of sug){ if(out.length >= 6) break; if(!out.some(x => x === s || s.includes(x) || x.includes(s))) out.push(s); }
+      return out.slice(0, 6);
+    };
+    return {
+      inputs: merge(cur?.inputs, src.inputs),
+      processes: merge(cur?.processes, src.processes),
+      outputs: merge(cur?.outputs, src.outputs),
+      source: d ? 'domain' : 'generic'
+    };
+  },
+  ipoNote(row){
+    const n = row.name || '';
+    if(row.stage === 'input'){
+      if(/日期|時間/.test(n)) return '格式：YYYY-MM-DD HH:mm；來源：系統時間戳';
+      if(/姓名|名稱|類別|種類|型號|地點|區域/.test(n)) return '類別型欄位；來源：登錄表單／主檔；需檢查拼字與重複';
+      if(/感測|讀值|溫|溼|濕/.test(n)) return '數值型；來源：感測器每 10 分鐘上傳；需檢查缺漏與離群值';
+      return '數值型欄位；來源：CSV／表單／API；需檢查缺失值與型別';
+    }
+    if(row.stage === 'process'){
+      if(/清洗|缺失|補值/.test(n)) return '方法：以平均值補缺失、去除重複列；輸出：乾淨資料表';
+      if(/檢定|顯著/.test(n)) return '方法：Welch t 檢定比較兩組平均；判準：p < 0.05';
+      if(/模擬|蒙地卡羅/.test(n)) return '方法：重抽樣 1000 次估計平均與 95% 區間';
+      if(/預測|迴歸|趨勢/.test(n)) return '方法：線性迴歸 y = kx + b；評估：R²';
+      if(/分級|分類|分群/.test(n)) return '方法：依分位數分為低／中／高三級';
+      if(/門檻|警示|異常|偵測/.test(n)) return '方法：平均 + 2 個標準差為門檻，超過即標記';
+      if(/排序|排名|推薦/.test(n)) return '方法：依指標由高到低排序，取前 5 名';
+      if(/指標|效率|績效/.test(n)) return '方法：各欄位 z 分數平均，換算為 50±10 的綜合分數';
+      return '方法：pandas 統計彙整；輸出：摘要表';
+    }
+    if(/圖|視覺化/.test(n)) return '呈現：Chart.js／matplotlib 圖表，含標題與單位';
+    if(/警示|通知|提醒/.test(n)) return '呈現：清單＋推播（LINE／Email）；觸發：超過門檻';
+    if(/報表|CSV|表格/.test(n)) return '呈現：CSV／表格，前 8 筆預覽，可下載';
+    if(/建議|結論/.test(n)) return '呈現：規則式文字建議，依統計結果自動產生';
+    return '呈現：文字摘要（平均／最大／最小）';
+  },
+  script(st){
+    const v = st.video, m = st.mind;
+    const t = (a,b) => `${Math.floor(a/60)}:${String(a%60).padStart(2,'0')}-${Math.floor(b/60)}:${String(b%60).padStart(2,'0')}`;
+    const t1 = v.t1, t2 = v.t2, t3 = v.t3, len = v.len, t4 = len - t1 - t2 - t3;
+    const title = m.title || '這個專題';
+    const inp = m.inputs[0] || '各種資料', pr = m.processes.slice(0,2).join('、') || '自動化處理', out = m.outputs[0] || '結果';
+    const run = st.run || {};
+    const kpi = `每天要處理上百筆${inp}`;
+    const ranTxt = run.charts?.length ? `程式實際執行後，產出 ${run.charts.length} 張成果圖。` : '';
+    const script = `起（${t(0,t1)}）
+【旁白摘要】你有沒有想過，${kpi}，光靠人工要花多少時間？${title}就是為了解決這個問題而誕生。
+【畫面描述】開場黑底浮現專題名稱，快速閃過${inp}的畫面，最後停在一個問號。
+
+承（${t(t1,t1+t2)}）
+【旁白摘要】系統先收集${m.inputs.slice(0,3).join('、') || '輸入資料'}，接著進行${pr}，把雜亂的資料變成有意義的資訊。${ranTxt}
+【畫面描述】心智圖由中心向三個分支展開；IPO 表逐列亮起；程式碼視窗跑出執行結果。
+
+轉（${t(t1+t2,t1+t2+t3)}）
+【旁白描述】想像一下，早上打開系統，${out}已經自動整理好，${m.outputs[1] ? m.outputs[1] + '也一目了然' : '哪裡需要注意一眼就看到'}。
+【畫面描述】使用者操作畫面：圖表出現、警示彈出、報表下載完成。
+
+合（${t(t1+t2+t3,len)}）
+【旁白摘要】${title}，用資料說話，讓決策更快、更準。現在就開始，用 IPO 思維打造屬於你的智慧系統。
+【畫面描述】成果總覽畫面，專題名稱與組員名單淡入，結尾行動呼籲字幕。`.replace('【旁白描述】','【旁白摘要】');
+
+    // 旁白逐字稿：依秒數分段（每段約 4 字/秒）
+    const acts = [
+      { s:0, e:t1, lines:[`你有沒有想過，${kpi}，靠人工要花多少時間？`, `${title}，就是為了解決這個問題而誕生。`] },
+      { s:t1, e:t1+t2, lines:[`系統先收集${m.inputs.slice(0,3).join('、') || '輸入資料'}。`, `接著進行${pr}。`, `把雜亂的資料，變成有意義的資訊。`, ranTxt || `程式一執行，結果立刻出現。`] },
+      { s:t1+t2, e:t1+t2+t3, lines:[`想像一下，早上打開系統，`, `${out}已經自動整理好。`, `${m.outputs[1] ? m.outputs[1] + '也一目了然。' : '該注意的地方一眼就看到。'}`, `省下的時間，可以做更重要的決定。`] },
+      { s:t1+t2+t3, e:len, lines:[`${title}，用資料說話。`, `讓決策更快、更準。`, `現在就開始，用 IPO 思維打造你的智慧系統。`] }
+    ];
+    const narration = acts.map(a => {
+      const per = (a.e - a.s) / a.lines.length;
+      return a.lines.map((l, i) => `[${t(Math.round(a.s + i*per), Math.round(a.s + (i+1)*per))}] ${l}`).join('\n');
+    }).join('\n');
+    const prompts = `起→[主體：一位年輕人面對堆滿紙本紀錄的桌面；環境：昏暗辦公室；動作：翻找資料、皺眉；鏡頭：緩慢推進特寫；風格：${v.style}；光線：冷色調側光]
+承→[主體：發光的心智圖與資料流；環境：深藍科技背景；動作：節點依序亮起、資料沿線流動；鏡頭：環繞運鏡；風格：${v.style}；光線：霓虹藍紫]
+轉→[主體：使用者在平板上查看${out}；環境：明亮的工作場景；動作：點擊、微笑、點頭；鏡頭：中景轉特寫；風格：${v.style}；光線：自然晨光]
+合→[主體：專題名稱「${title}」立體字；環境：乾淨漸層背景；動作：字體淡入、光暈擴散；鏡頭：固定；風格：${v.style}；光線：柔和高調光]`;
+    return { script, narration, prompts };
+  },
+  review(kind, st){
+    const m = st.mind; const rows = st.ipo.rows;
+    const tips = [];
+    if(kind === 'mind'){
+      if(m.inputs.length < 3) tips.push('INPUT 少於 3 項：想想「誰提供資料、從哪裡來、多久一次」。');
+      if(m.processes.length < 3) tips.push('PROCESS 少於 3 項：至少包含「清洗 → 統計 → 判斷／預測」三層。');
+      if(m.outputs.length < 3) tips.push('OUTPUT 少於 3 項：建議同時有「圖表、警示、報表、建議」不同形式。');
+      if(!m.outputs.some(o => /圖/.test(o))) tips.push('OUTPUT 缺少視覺化：加入一張長條圖或折線圖，簡報與影片會更有說服力。');
+      if(!m.processes.some(p => /清洗|缺失|補值/.test(p))) tips.push('PROCESS 建議加入「資料清洗」：真實資料一定有缺漏。');
+      if(!m.desc) tips.push('專題描述空白：用一句話說明「為誰、解決什麼問題」。');
+    } else if(kind === 'ipo'){
+      const empty = rows.filter(r => !r.note).length;
+      if(empty) tips.push(`有 ${empty} 列說明空白：按「✨ 自動補充說明」或自行填寫來源／方法／呈現方式。`);
+      if(!rows.some(r => r.stage === 'process' && /預測|檢定|模擬|分級|門檻/.test(r.name))) tips.push('PROCESS 全是統計彙整：加入「預測／檢定／模擬／門檻判斷」讓分析更有深度。');
+      const dup = rows.map(r => r.name).filter((x, i, a) => a.indexOf(x) !== i);
+      if(dup.length) tips.push('有重複項目：' + [...new Set(dup)].join('、'));
+    }
+    const score = Math.max(55, 95 - tips.length * 8);
+    const good = kind === 'mind' ? `三分支共 ${m.inputs.length + m.processes.length + m.outputs.length} 項${m.outputs.some(o=>/圖/.test(o)) ? '，已含視覺化輸出' : ''}${m.processes.some(p=>/清洗/.test(p)) ? '，已含資料清洗' : ''}。` : `IPO 表共 ${rows.length} 列，${rows.filter(r=>r.note).length} 列已有說明。`;
+    if(!tips.length) tips.push('結構完整，可以進入下一步。');
+    return `[評分]\n總分 ${score} / 100（離線規則檢查，非 AI 評分）\n[/評分]\n[優點]\n${good}\n[/優點]\n[建議]\n${tips.map((x, i) => `${i+1}. ${x}`).join('\n')}\n[/建議]`;
+  }
+};
+
+
+/* ===================================================================
+   v4 擴充：共同身分、老師代管 AI、一鍵心智圖、Pyodide 執行、
+           影片製作、成果總覽、一鍵示範全流程
+   =================================================================== */
+
+// ============ 設定（老師可改） ============
+const AE_HUB_URL = 'https://ai-empower-hub.netlify.app';
+const AI_PROXY_URL_DEFAULT = '';   // ← 部署 gas/ai-proxy.gs 後，把 /exec 網址貼在這裡（學生就不用自己填）
+const PYODIDE_URL = 'https://cdn.jsdelivr.net/pyodide/v0.26.4/full/';
+const AE_ID_KEY = 'ae.identity.v1';
+
+// ============ 共同身分（?sid=&cls=）============
+function aeGetIdentity(){
+  try{
+    const q = new URLSearchParams(location.search);
+    const sid = (q.get('sid') || '').trim(), cls = (q.get('cls') || '').trim();
+    if(sid){
+      const o = { sid, cls, ts: Date.now() };
+      localStorage.setItem(AE_ID_KEY, JSON.stringify(o));
+      return o;
+    }
+    const raw = localStorage.getItem(AE_ID_KEY);
+    return raw ? JSON.parse(raw) : null;
+  }catch(e){ return null; }
+}
+function aeSetIdentity(sid, cls){
+  const o = { sid: String(sid || '').trim(), cls: String(cls || '').trim(), ts: Date.now() };
+  try{ localStorage.setItem(AE_ID_KEY, JSON.stringify(o)); }catch(e){}
+  if(window.AEBridge?.setIdentity) try{ AEBridge.setIdentity(o); }catch(e){}
+  renderIdentityCard();
+  return o;
+}
+function renderIdentityCard(){
+  const el = $('#identityCard'); if(!el) return;
+  const id = aeGetIdentity();
+  if(id && id.sid){
+    el.innerHTML = `<div style="display:flex;align-items:center;gap:8px"><span style="font-size:18px">🪪</span><div style="flex:1"><div style="font-weight:700;color:var(--text)">學號 ${escapeHtml(id.sid)}</div><div style="font-size:11px;color:var(--muted)">班級 ${escapeHtml(id.cls || '—')}</div></div><button class="sidebar-btn" style="margin:0;width:auto;padding:4px 8px;font-size:11px" onclick="promptIdentity()">改</button></div>`;
+  } else {
+    el.innerHTML = `<div style="font-size:12px;color:var(--muted);margin-bottom:6px">🪪 我是誰？只填一次</div><button class="sidebar-btn" style="margin:0" onclick="promptIdentity()">填寫學號／班級</button>`;
+  }
+}
+function promptIdentity(){
+  const cur = aeGetIdentity() || {};
+  const sid = prompt('學號（例：6010）', cur.sid || ''); if(sid === null) return;
+  const cls = prompt('班級（例：MIS）', cur.cls || ''); if(cls === null) return;
+  aeSetIdentity(sid, cls);
+  toast('身分已設定', 'ok');
+}
+
+// ============ 雲端回報（Hub bridge.js 若載入則鏡射到雲端；否則存本地紀錄）============
+function cloudReport(kind, score, max, detail){
+  const id = aeGetIdentity() || {};
+  const rec = { ts: new Date().toISOString(), kind, score, max, sid: id.sid || '', cls: id.cls || '', detail };
+  if(!state.log) state.log = [];
+  state.log.push(rec); if(state.log.length > 200) state.log.shift();
+  saveState();
+  try{ if(window.AEBridge?.push) AEBridge.push({ kind, score, max, detail: Object.assign({ app:'studio', title: state.mind.title }, detail || {}) }); }catch(e){ console.warn('cloud push failed', e); }
+  updateCloudStatus();
+}
+function updateCloudStatus(){
+  const el = $('#cloudStatusText'); if(!el) return;
+  const ok = !!window.AEBridge;
+  el.textContent = ok ? `已連線 Hub（${(state.log||[]).length} 筆紀錄）` : `本地紀錄 ${(state.log||[]).length} 筆（未連 Hub）`;
+  $('#cloudStatus')?.classList.toggle('ok', ok);
+}
+// 步驟完成時自動回報
+const _origMarkComplete = markComplete;
+markComplete = function(n){
+  const first = !state.completed[n];
+  _origMarkComplete(n);
+  if(first){
+    const done = Object.values(state.completed).filter(Boolean).length;
+    cloudReport('project', done, 5, { step: n, stepName: ['','心智圖','IPO','Python','PPT','影片'][n] });
+  }
+  renderProgressOverview();
+};
+
+// ============ AI 設定擴充：老師代管（proxy）／離線 ============
+aiConfig.provider = aiConfig.provider || 'gemini';
+if(aiConfig.proxyUrl === undefined) aiConfig.proxyUrl = '';
+if(aiConfig.classCode === undefined) aiConfig.classCode = '';
+
+function aiReady(){
+  if(aiConfig.provider === 'offline') return false;
+  if(aiConfig.provider === 'proxy') return !!(aiConfig.classCode && (aiConfig.proxyUrl || AI_PROXY_URL_DEFAULT));
+  return !!aiConfig.apiKey;
+}
+
+async function callAIProxy(systemPrompt, userMessage, maxTokens){
+  const url = aiConfig.proxyUrl || AI_PROXY_URL_DEFAULT;
+  if(!url) throw new Error('尚未設定老師代管網址');
+  const id = aeGetIdentity() || {};
+  const resp = await fetch(url, {
+    method: 'POST',
+    headers: { 'Content-Type': 'text/plain;charset=utf-8' },   // text/plain 避免 CORS preflight
+    body: JSON.stringify({ action:'ai', code: aiConfig.classCode, sid: id.sid || '', cls: id.cls || '', system: systemPrompt, user: userMessage, max: maxTokens, model: aiConfig.model || '' })
+  });
+  const data = await resp.json().catch(()=>({ ok:false, error:'代理回應不是 JSON' }));
+  if(!data.ok) throw new Error(data.error || '老師代管 AI 呼叫失敗');
+  return (data.text || '').trim();
+}
+
+const _callAIv3 = callAI;   // 含用量統計的 v3 版本
+callAI = async function(systemPrompt, userMessage, maxTokens = 4000){
+  if(aiConfig.provider === 'offline') throw new Error('離線模式');
+  if(aiConfig.provider === 'proxy'){
+    const r = await callAIProxy(systemPrompt, userMessage, maxTokens);
+    trackAICall((r || '').length);
+    return r;
+  }
+  return _callAIv3(systemPrompt, userMessage, maxTokens);
+};
+
+// 有 AI 就用 AI，失敗或沒有 AI 就退回離線引擎
+async function aiOrOffline(label, aiFn, offlineFn){
+  if(aiReady()){
+    try{ const r = await aiFn(); return { result: r, mode: 'ai' }; }
+    catch(e){ console.warn(label, e); toast(`${label}：AI 失敗（${e.message}），改用離線引擎`, 'warn'); }
+  }
+  return { result: await offlineFn(), mode: 'offline' };
+}
+
+openAISettings = function(){
+  loadAI();
+  $('#aiProvider').value = aiConfig.provider;
+  $('#aiApiKey').value = aiConfig.apiKey || '';
+  $('#aiModel').value = aiConfig.model || '';
+  $('#aiClassCode').value = aiConfig.classCode || '';
+  $('#aiProxyUrl').value = aiConfig.proxyUrl || AI_PROXY_URL_DEFAULT;
+  updateAIModelHint();
+  $('#aiModal').classList.add('show');
+};
+updateAIModelHint = function(){
+  const p = $('#aiProvider').value;
+  const isProxy = p === 'proxy', isOff = p === 'offline';
+  $('#aiKeyFields').style.display = (isProxy || isOff) ? 'none' : '';
+  $('#aiProxyFields').style.display = isProxy ? '' : 'none';
+  $('#aiOfflineHint').style.display = isOff ? '' : 'none';
+  if(!isProxy && !isOff){
+    $('#aiKeyHint').innerHTML = KEY_HINTS[p];
+    $('#aiModelHint').textContent = `預設：${DEFAULT_MODELS[p]}`;
+    $('#aiModel').placeholder = DEFAULT_MODELS[p];
+  }
+};
+saveAISettings = function(){
+  aiConfig.provider = $('#aiProvider').value;
+  aiConfig.apiKey = $('#aiApiKey').value.trim();
+  aiConfig.model = $('#aiModel').value.trim();
+  aiConfig.classCode = $('#aiClassCode').value.trim();
+  aiConfig.proxyUrl = $('#aiProxyUrl').value.trim();
+  saveAI(); updateAIStatus(); closeModal('aiModal');
+  toast('AI 設定已儲存', 'ok');
+};
+testAIConnection = async function(){
+  aiConfig.provider = $('#aiProvider').value;
+  aiConfig.apiKey = $('#aiApiKey').value.trim();
+  aiConfig.model = $('#aiModel').value.trim();
+  aiConfig.classCode = $('#aiClassCode').value.trim();
+  aiConfig.proxyUrl = $('#aiProxyUrl').value.trim();
+  if(aiConfig.provider === 'offline'){ saveAI(); updateAIStatus(); toast('離線模式：不需連線測試', 'ok'); return; }
+  if(!aiReady()){ toast(aiConfig.provider === 'proxy' ? '請輸入班級碼（與老師代管網址）' : '請先輸入金鑰', 'warn'); return; }
+  toast('測試中...');
+  try{
+    const r = await callAI('你是測試助手', '請回覆「連線正常」四字', 50);
+    toast('✓ 連線測試成功：' + r.slice(0, 30), 'ok');
+    saveAI(); updateAIStatus();
+  }catch(e){ toast('連線失敗：' + e.message, 'err'); }
+};
+updateAIStatus = function(){
+  const el = $('#aiStatus'), txt = $('#aiStatusText');
+  if(aiConfig.provider === 'offline'){ el.classList.remove('ok'); txt.textContent = '離線模式（規則引擎）'; return; }
+  if(aiReady()){
+    el.classList.add('ok');
+    txt.textContent = aiConfig.provider === 'proxy' ? `老師代管 · 班級碼 ${aiConfig.classCode}` : `${({gemini:'Gemini', anthropic:'Claude', openai:'OpenAI'})[aiConfig.provider]} · 已設定`;
+  } else { el.classList.remove('ok'); txt.textContent = '尚未設定（可離線使用）'; }
+};
+
+// ============ 心智圖：一鍵生成 + Canvas 繪圖 ============
+function parseJsonLoose(text){
+  const m = text.match(/\{[\s\S]*\}/);
+  if(!m) throw new Error('AI 未回傳 JSON');
+  return JSON.parse(m[0].replace(/,\s*([}\]])/g, '$1'));
+}
+async function generateMindOneClick(){
+  readMindForm();
+  if(!state.mind.title){ toast('請先填寫專題名稱', 'warn'); $('#proj-title').focus(); return; }
+  const btn = event?.target; if(btn){ btn.disabled = true; btn.innerHTML = '<span class="spinner"></span> 生成中...'; }
+  try{
+    const cur = { inputs: state.mind.inputs, processes: state.mind.processes, outputs: state.mind.outputs };
+    const { result, mode } = await aiOrOffline('心智圖生成', async ()=>{
+      const prompt = `你是專題系統設計助手。請為以下專題生成完整的三分支心智圖（INPUT 輸入資料／PROCESS 處理步驟／OUTPUT 輸出成果），每分支 4-6 項，繁體中文，每項 6-14 字、具體可實作。
+若學生已填部分內容請保留並補足。PROCESS 至少包含「資料清洗」與一個「預測／檢定／模擬／分級／門檻判斷」步驟；OUTPUT 至少包含一個「圖」、一個「警示或報表」。
+
+專題名稱：${state.mind.title}
+專題描述：${state.mind.desc || '（未填）'}
+已填 INPUT：${cur.inputs.join('、') || '（空）'}
+已填 PROCESS：${cur.processes.join('、') || '（空）'}
+已填 OUTPUT：${cur.outputs.join('、') || '（空）'}
+
+只輸出 JSON，不要任何說明：
+{"desc":"一句話專題描述（若已填則沿用）","inputs":["..."],"processes":["..."],"outputs":["..."]}`;
+      const txt = await callAI('你是專題教學助手，只輸出 JSON。', prompt, 1500);
+      const j = parseJsonLoose(txt);
+      if(!Array.isArray(j.inputs) || !j.inputs.length) throw new Error('JSON 缺少 inputs');
+      return { inputs: j.inputs, processes: j.processes || [], outputs: j.outputs || [], desc: j.desc };
+    }, async ()=> Offline.mind(state.mind.title, state.mind.desc, cur));
+    $('#branch-input').value = result.inputs.join('\n');
+    $('#branch-process').value = result.processes.join('\n');
+    $('#branch-output').value = result.outputs.join('\n');
+    if(!state.mind.desc && result.desc) $('#proj-desc').value = result.desc;
+    readMindForm(); saveState();
+    renderMindmapTree();
+    await captureMindmapAsset();
+    toast(mode === 'ai' ? '✨ AI 已生成心智圖' : '📴 已用離線引擎生成心智圖（設定 AI 後可更貼近主題）', 'ok');
+  }catch(e){ toast('生成失敗：' + e.message, 'err'); }
+  finally{ if(btn){ btn.disabled = false; btn.innerHTML = '🪄 一鍵生成心智圖'; } }
+}
+
+// 舊版「AI 補充建議」改為：有 AI 用 AI、沒有就離線
+aiEnrichMind = async function(){
+  readMindForm();
+  if(!state.mind.title){ toast('請先填寫專題名稱'); return; }
+  return generateMindOneClick();
+};
+
+function wrapText(ctx, text, maxW){
+  const lines = []; let cur = '';
+  for(const ch of String(text || '')){
+    if(ch === '\n'){ lines.push(cur); cur = ''; continue; }
+    const test = cur + ch;
+    if(ctx.measureText(test).width > maxW && cur){ lines.push(cur); cur = ch; } else cur = test;
+  }
+  if(cur) lines.push(cur);
+  return lines;
+}
+function roundRect(ctx, x, y, w, h, r){
+  ctx.beginPath(); ctx.moveTo(x+r, y); ctx.arcTo(x+w, y, x+w, y+h, r); ctx.arcTo(x+w, y+h, x, y+h, r); ctx.arcTo(x, y+h, x, y, r); ctx.arcTo(x, y, x+w, y, r); ctx.closePath();
+}
+// 在任意 canvas 上畫心智圖（樹狀三分支）
+function drawMindmap(ctx, W, H, opts = {}){
+  const m = state.mind;
+  const font = "'Microsoft JhengHei','PingFang TC','Noto Sans CJK TC','Noto Sans TC',sans-serif";
+  const dark = !!opts.dark;
+  ctx.save();
+  if(!opts.transparent){
+    const g = ctx.createLinearGradient(0, 0, W, H);
+    if(dark){ g.addColorStop(0, '#0f1722'); g.addColorStop(1, '#2d1b4e'); } else { g.addColorStop(0, '#ffffff'); g.addColorStop(1, '#f1f5f9'); }
+    ctx.fillStyle = g; ctx.fillRect(0, 0, W, H);
+  }
+  const s = W / 1600;   // 比例
+  const rootX = W/2, rootY = 110*s;
+  const branches = [
+    { name:'📥 INPUT', items:m.inputs, color:'#3b82f6', x: W*0.19 },
+    { name:'⚙️ PROCESS', items:m.processes, color:'#a855f7', x: W*0.5 },
+    { name:'📊 OUTPUT', items:m.outputs, color:'#ec4899', x: W*0.81 }
+  ];
+  const hubY = 300*s;
+  // root
+  ctx.font = `700 ${34*s}px ${font}`;
+  const title = m.title || '專題';
+  const tw = Math.min(ctx.measureText(title).width + 80*s, W*0.6);
+  const rg = ctx.createLinearGradient(rootX - tw/2, 0, rootX + tw/2, 0); rg.addColorStop(0, '#a855f7'); rg.addColorStop(1, '#3b82f6');
+  ctx.shadowColor = 'rgba(0,0,0,.25)'; ctx.shadowBlur = 16*s; ctx.shadowOffsetY = 4*s;
+  ctx.fillStyle = rg; roundRect(ctx, rootX - tw/2, rootY - 40*s, tw, 80*s, 40*s); ctx.fill();
+  ctx.shadowColor = 'transparent';
+  ctx.fillStyle = '#fff'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+  ctx.fillText(wrapText(ctx, title, tw - 40*s)[0] || title, rootX, rootY);
+  branches.forEach(b => {
+    // connector root → hub
+    ctx.strokeStyle = b.color; ctx.lineWidth = 4*s; ctx.globalAlpha = .7;
+    ctx.beginPath(); ctx.moveTo(rootX, rootY + 40*s); ctx.bezierCurveTo(rootX, hubY - 60*s, b.x, rootY + 80*s, b.x, hubY - 26*s); ctx.stroke();
+    ctx.globalAlpha = 1;
+    // hub
+    ctx.fillStyle = b.color; ctx.shadowColor = 'rgba(0,0,0,.2)'; ctx.shadowBlur = 10*s; ctx.shadowOffsetY = 3*s;
+    roundRect(ctx, b.x - 110*s, hubY - 26*s, 220*s, 52*s, 26*s); ctx.fill(); ctx.shadowColor = 'transparent';
+    ctx.fillStyle = '#fff'; ctx.font = `700 ${22*s}px ${font}`; ctx.fillText(b.name, b.x, hubY);
+    // items
+    const items = (b.items || []).slice(0, 7);
+    const gap = Math.min(78*s, (H - hubY - 80*s) / Math.max(items.length, 1));
+    ctx.font = `${19*s}px ${font}`;
+    items.forEach((it, i) => {
+      const y = hubY + 70*s + i * gap;
+      const txt = wrapText(ctx, it, 300*s)[0] || '';
+      const w = Math.max(ctx.measureText(txt).width + 36*s, 120*s);
+      ctx.strokeStyle = b.color; ctx.lineWidth = 2*s; ctx.globalAlpha = .5;
+      ctx.beginPath(); ctx.moveTo(b.x, hubY + 26*s); ctx.quadraticCurveTo(b.x - 20*s, y, b.x - w/2, y); ctx.stroke(); ctx.globalAlpha = 1;
+      ctx.fillStyle = dark ? 'rgba(255,255,255,.08)' : '#fff'; ctx.strokeStyle = b.color; ctx.lineWidth = 1.5*s;
+      roundRect(ctx, b.x - w/2, y - 20*s, w, 40*s, 20*s); ctx.fill(); ctx.stroke();
+      ctx.fillStyle = dark ? '#e2e8f0' : '#1e293b'; ctx.fillText(txt, b.x, y);
+    });
+  });
+  ctx.restore();
+}
+async function captureMindmapAsset(){
+  readMindForm();
+  if(!state.mind.inputs.length && !state.mind.processes.length && !state.mind.outputs.length) return null;
+  const c = document.createElement('canvas'); c.width = 1600; c.height = 900;
+  drawMindmap(c.getContext('2d'), 1600, 900);
+  const png = c.toDataURL('image/jpeg', 0.9);   // JPEG 以節省 localStorage 空間
+  if(!state.assets) state.assets = {};
+  state.assets.mindmap = png;
+  saveState();
+  const prev = $('#mindCanvasPreview'); if(prev){ prev.src = png; $('#mindCanvasCard').style.display = ''; }
+  return png;
+}
+function downloadMindCanvasPng(){
+  const png = state.assets?.mindmap; if(!png){ toast('請先生成心智圖', 'warn'); return; }
+  const a = document.createElement('a'); a.href = png; a.download = `${safeName()}_mindmap.png`; a.click(); trackExport('png');
+}
+function safeName(){ return (state.mind.title || 'project').replace(/[^\w一-龥-]+/g, '_'); }
+
+// 心智圖存檔時同步產生圖片資產
+const _origSaveMindAndAdvance = saveMindAndAdvance;
+saveMindAndAdvance = function(){
+  readMindForm();
+  const ok = state.mind.inputs.length && state.mind.processes.length && state.mind.outputs.length;
+  _origSaveMindAndAdvance();
+  if(ok) captureMindmapAsset();
+};
+
+// 離線審稿
+const _origAiReviewMind = aiReviewMind, _origAiReviewIpo = aiReviewIpo;
+aiReviewMind = async function(){
+  readMindForm();
+  if(aiReady()) return _origAiReviewMind();
+  renderReviewResult(Offline.review('mind', state), '#mindReviewBody'); $('#mindReviewCard').style.display = '';
+};
+aiReviewIpo = async function(){
+  if(aiReady()) return _origAiReviewIpo();
+  renderReviewResult(Offline.review('ipo', state), '#ipoReviewBody'); $('#ipoReviewCard').style.display = '';
+};
+
+// ============ IPO：自動補充說明 ============
+async function autoFillIpoNotes(){
+  if(!state.ipo.rows.length){ toast('IPO 表為空', 'warn'); return; }
+  const btn = event?.target; if(btn){ btn.disabled = true; btn.innerHTML = '<span class="spinner"></span> 補充中...'; }
+  try{
+    const { result, mode } = await aiOrOffline('IPO 說明', async ()=>{
+      const list = state.ipo.rows.map((r, i)=>`${i+1}. [${r.stage.toUpperCase()}] ${r.name}`).join('\n');
+      const txt = await callAI('你是專題系統分析師，只輸出 JSON。', `專題：${state.mind.title}\n${state.mind.desc||''}\n\n為下列 IPO 項目各寫一句 15-30 字的說明（INPUT 寫資料來源與格式；PROCESS 寫方法／演算法；OUTPUT 寫呈現方式）。\n${list}\n\n只輸出 JSON 陣列，順序與編號一致：["說明1","說明2",...]`, 1500);
+      const arr = JSON.parse(txt.match(/\[[\s\S]*\]/)[0]);
+      if(arr.length !== state.ipo.rows.length) throw new Error('數量不符');
+      return arr;
+    }, async ()=> state.ipo.rows.map(r => Offline.ipoNote(r)));
+    state.ipo.rows.forEach((r, i)=>{ if(!r.note) r.note = result[i]; });
+    saveState(); renderIpoTable();
+    toast(mode === 'ai' ? '✨ AI 已補充說明' : '📴 已用離線規則補充說明', 'ok');
+  }catch(e){ toast('補充失敗：' + e.message, 'err'); }
+  finally{ if(btn){ btn.disabled = false; btn.innerHTML = '✨ 自動補充說明'; } }
+}
+
+// ============ Python：AI 模式無金鑰時退回模板 ============
+const _origGenerateCode = generateCode;
+generateCode = async function(){
+  if($('#codeMode').value === 'ai' && !aiReady()){
+    toast('未設定 AI，改用可執行離線模板', 'warn');
+    $('#codeMode').value = 'template';
+  }
+  return _origGenerateCode();
+};
+
+// ============ Pyodide：瀏覽器內執行 Python ============
+let pyodideInst = null, pyodideLoading = null;
+function loadScriptOnce(src){
+  return new Promise((res, rej)=>{
+    if(document.querySelector(`script[src="${src}"]`)) return res();
+    const s = document.createElement('script'); s.src = src; s.onload = res; s.onerror = ()=>rej(new Error('無法載入 ' + src)); document.head.appendChild(s);
+  });
+}
+async function getPyodide(onStatus){
+  if(pyodideInst) return pyodideInst;
+  if(!pyodideLoading){
+    pyodideLoading = (async ()=>{
+      onStatus?.('載入 Python 執行環境（首次約 10-20 秒）...');
+      await loadScriptOnce(PYODIDE_URL + 'pyodide.js');
+      const py = await loadPyodide({ indexURL: PYODIDE_URL });
+      onStatus?.('載入 numpy / pandas...');
+      await py.loadPackage(['numpy', 'pandas']);
+      py.runPython("import warnings; warnings.simplefilter('ignore')");
+      pyodideInst = py;
+      return py;
+    })().catch(e => { pyodideLoading = null; throw e; });
+  }
+  return pyodideLoading;
+}
+async function runPythonInBrowser(){
+  const code = state.code.full;
+  if(!code){ toast('請先生成程式碼', 'warn'); return; }
+  if(state.code.lang !== 'python'){ toast('瀏覽器內執行僅支援 Python', 'warn'); return; }
+  const btn = event?.target; const status = $('#runStatus'); const out = $('#runStdout');
+  $('#runResultCard').style.display = '';
+  if(btn){ btn.disabled = true; btn.innerHTML = '<span class="spinner"></span> 執行中...'; }
+  out.textContent = ''; $('#runCharts').innerHTML = '';
+  const setStatus = s => { status.textContent = s; };
+  const t0 = Date.now();
+  try{
+    const py = await getPyodide(setStatus);
+    if(/matplotlib/.test(code)){ setStatus('載入 matplotlib...'); await py.loadPackage('matplotlib'); }
+    setStatus('執行中...');
+    let stdout = '';
+    py.setStdout({ batched: s => { stdout += s + '\n'; out.textContent = stdout.replace(/@@CHART@@.*\n/g, '').slice(-20000); } });
+    py.setStderr({ batched: s => { stdout += '[stderr] ' + s + '\n'; } });
+    // 每次執行使用乾淨的全域命名空間
+    const ns = py.globals.get('dict')();
+    ns.set('__name__', '__main__');
+    let error = null;
+    try{
+      if(/matplotlib/.test(code)) await py.runPythonAsync("import matplotlib\nmatplotlib.use('AGG')");
+      await py.runPythonAsync(code, { globals: ns });
+      if(/matplotlib/.test(code)){
+        const b64 = await py.runPythonAsync(`
+import io, base64, json
+import matplotlib.pyplot as plt
+_imgs = []
+for _n in plt.get_fignums():
+    _b = io.BytesIO(); plt.figure(_n).savefig(_b, format='png', dpi=110, bbox_inches='tight'); _imgs.append(base64.b64encode(_b.getvalue()).decode())
+plt.close('all')
+json.dumps(_imgs)`);
+        JSON.parse(b64).forEach((b, i) => stdout += '@@IMG@@' + b + '\n');
+      }
+    }catch(e){ error = String(e.message || e); }
+    finally{ try{ ns.destroy(); }catch(e){} }
+    // 解析輸出
+    const charts = [], images = [], lines = [];
+    stdout.split('\n').forEach(l => {
+      if(l.startsWith('@@CHART@@')){ try{ charts.push(JSON.parse(l.slice(9))); }catch(e){} }
+      else if(l.startsWith('@@IMG@@')) images.push('data:image/png;base64,' + l.slice(7));
+      else lines.push(l);
+    });
+    const text = lines.join('\n').trim();
+    out.textContent = text + (error ? '\n\n❌ 錯誤：' + error : '');
+    const chartPngs = [];
+    for(const spec of charts){ const png = renderChartSpec(spec); if(png) chartPngs.push({ title: spec.title, png }); }
+    images.forEach((png, i) => chartPngs.push({ title: `matplotlib 圖 ${i+1}`, png }));
+    $('#runCharts').innerHTML = chartPngs.map(c => `<figure style="margin:0"><img src="${c.png}" style="width:100%;border-radius:10px;background:#fff"><figcaption style="font-size:12px;color:var(--muted);text-align:center;margin-top:4px">${escapeHtml(c.title)}</figcaption></figure>`).join('');
+    const summaryLine = (text.match(/✓ Pipeline completed[^\n]*/) || [''])[0];
+    state.run = { ts: Date.now(), ok: !error, error, stdout: text.slice(0, 6000), charts: chartPngs, elapsed: Date.now() - t0,
+                  summary: summaryLine ? summaryLine.replace('✓ Pipeline completed —', '').trim().slice(0, 120) : '' };
+    saveState();
+    setStatus(error ? `❌ 執行出錯（${((Date.now()-t0)/1000).toFixed(1)} 秒）` : `✓ 執行完成（${((Date.now()-t0)/1000).toFixed(1)} 秒，${chartPngs.length} 張圖）`);
+    if(!error){ cloudReport('project-run', 1, 1, { charts: chartPngs.length, elapsed: state.run.elapsed }); toast('程式執行完成，結果已存入專題（PPT 與影片會用到）', 'ok'); }
+    else toast('程式執行出錯，請看錯誤訊息（可按「🐛 AI 找 Bug」）', 'err');
+    renderProgressOverview();
+  }catch(e){
+    setStatus('❌ ' + e.message);
+    out.textContent = '無法載入 Python 執行環境：' + e.message + '\n（需要網路連到 cdn.jsdelivr.net；或下載 .ipynb 到 Colab 執行）';
+  }finally{ if(btn){ btn.disabled = false; btn.innerHTML = '▶ 在瀏覽器執行'; } }
+}
+// 用 Chart.js 把 @@CHART@@ 規格畫成 PNG（支援中文）
+function renderChartSpec(spec){
+  if(typeof Chart === 'undefined') return null;
+  const c = document.createElement('canvas'); c.width = 900; c.height = 500;
+  const palette = ['#3b82f6','#a855f7','#ec4899','#f59e0b','#10b981','#06b6d4','#ef4444','#8b5cf6'];
+  const kind = spec.kind === 'scatter' ? 'scatter' : (['bar','line','pie','radar','doughnut'].includes(spec.kind) ? spec.kind : 'bar');
+  const labels = spec.labels || [], values = spec.values || [];
+  const data = kind === 'scatter'
+    ? { datasets:[{ label: spec.title, data: labels.map((x, i)=>({ x: parseFloat(x), y: values[i] })), backgroundColor: '#3b82f6' }] }
+    : { labels, datasets:[{ label: spec.title, data: values, backgroundColor: (kind === 'pie' || kind === 'doughnut') ? palette : (kind === 'radar' ? 'rgba(59,130,246,.25)' : '#3b82f6'), borderColor: kind === 'line' || kind === 'radar' ? '#3b82f6' : undefined, fill: kind === 'radar', tension: .3 }] };
+  const bgPlugin = { id:'bg', beforeDraw: ch => { const x = ch.ctx; x.save(); x.fillStyle = '#fff'; x.fillRect(0, 0, ch.width, ch.height); x.restore(); } };
+  const font = { family: "'Microsoft JhengHei','PingFang TC','Noto Sans CJK TC',sans-serif", size: 14 };
+  const ch = new Chart(c.getContext('2d'), { type: kind, data, plugins:[bgPlugin], options: { animation:false, responsive:false, devicePixelRatio: 1,
+    plugins:{ title:{ display:true, text: spec.title, font:{ ...font, size: 18, weight:'700' } }, legend:{ display: kind === 'pie' || kind === 'doughnut', labels:{ font } } },
+    scales: (kind === 'pie' || kind === 'doughnut' || kind === 'radar') ? {} : { x:{ ticks:{ font } }, y:{ ticks:{ font }, beginAtZero: true } } } });
+  const png = c.toDataURL('image/png'); ch.destroy(); return png;
+}
+
+// ============ PPT（v4 統一建構器）============
+refreshOutline = function(){
+  state.ppt.theme = $('#pptTheme').value; state.ppt.lang = $('#pptLang').value; state.ppt.author = $('#pptAuthor').value;
+  const zh = state.ppt.lang === 'zh';
+  const o = [];
+  o.push({ slot:'cover', title: state.mind.title || '專題系統' });
+  o.push({ slot:'agenda', title: zh ? '簡報大綱' : 'Agenda' });
+  o.push({ slot:'intro', title: zh ? '專題介紹' : 'Introduction' });
+  o.push({ slot:'mindmap', title: zh ? '心智圖架構' : 'Mind Map' });
+  o.push({ slot:'ipo', stage:'input', title: zh ? '📥 INPUT 輸入模組' : '📥 INPUT Module' });
+  o.push({ slot:'ipo', stage:'process', title: zh ? '⚙️ PROCESS 處理模組' : '⚙️ PROCESS Module' });
+  o.push({ slot:'ipo', stage:'output', title: zh ? '📊 OUTPUT 輸出模組' : '📊 OUTPUT Module' });
+  if(state.code.input) o.push({ slot:'code', kind:'input', title: zh ? 'INPUT 程式實作' : 'INPUT Code' });
+  if(state.code.process) o.push({ slot:'code', kind:'process', title: zh ? 'PROCESS 程式實作' : 'PROCESS Code' });
+  if(state.code.output) o.push({ slot:'code', kind:'output', title: zh ? 'OUTPUT 程式實作' : 'OUTPUT Code' });
+  if(state.run?.stdout) o.push({ slot:'run', title: zh ? '▶ 程式執行結果' : 'Execution Result' });
+  (state.run?.charts || []).slice(0, 4).forEach((c, i) => o.push({ slot:'chart', idx:i, title: (zh ? '成果圖表：' : 'Chart: ') + c.title }));
+  if(state.video?.script) o.push({ slot:'storyboard', title: zh ? '🎬 影片分鏡（起承轉合）' : 'Storyboard' });
+  o.push({ slot:'thanks', title: zh ? '感謝聆聽' : 'Thank You' });
+  state.ppt.outline = o;
+  const ul = $('#outlinePreview');
+  if(ul) ul.innerHTML = o.map((s, i)=>`<li style="padding:10px 14px;margin-bottom:6px;background:var(--surface2);border-radius:8px;border-left:3px solid var(--accent);display:flex;align-items:center;gap:10px"><span style="color:var(--muted);font-size:12px;width:24px">${i+1}.</span><span style="flex:1">${escapeHtml(s.title)}</span><span class="chip">${s.slot}</span></li>`).join('');
+};
+
+async function buildPresentation(){
+  if(!state.ppt.outline?.length) refreshOutline();
+  if(!state.assets?.mindmap) await captureMindmapAsset();
+  const pres = new PptxGenJS();
+  pres.layout = 'LAYOUT_WIDE';
+  pres.title = state.mind.title || 'Presentation';
+  pres.author = state.ppt.author || '智慧專題創作平台';
+  const theme = PPT_THEMES[state.ppt.theme] || PPT_THEMES.academic;
+  const zh = state.ppt.lang === 'zh';
+  const outline = state.ppt.outline, total = outline.length;
+  const dateStr = new Date().toLocaleDateString(zh ? 'zh-TW' : 'en-US');
+  const id = aeGetIdentity() || {};
+  const footerText = `${state.mind.title || 'Presentation'} · ${dateStr}${id.sid ? ' · ' + (id.cls ? id.cls + ' ' : '') + id.sid : ''}`;
+  const nI = state.ipo.rows.filter(r=>r.stage==='input').length, nP = state.ipo.rows.filter(r=>r.stage==='process').length, nO = state.ipo.rows.filter(r=>r.stage==='output').length;
+  const decorate = (slide, idx) => {
+    slide.background = { color: theme.bg };
+    slide.addShape(pres.ShapeType.rect, { x:0, y:0, w:13.333, h:0.12, fill:{ color: theme.accent }, line:{ color: theme.accent } });
+    if(idx > 0){
+      slide.addText(`${idx+1} / ${total}`, { x:12.4, y:7.15, w:0.8, h:0.3, fontSize:9, color:theme.body, fontFace:theme.font, align:'right' });
+      slide.addText(footerText, { x:0.4, y:7.15, w:11.5, h:0.3, fontSize:9, color:theme.body, fontFace:theme.font });
+    }
+  };
+  const titleBar = (slide, title) => {
+    slide.addText(title, { x:0.5, y:0.4, w:12.3, h:0.9, fontSize:26, bold:true, color:theme.title, fontFace:theme.font });
+    slide.addShape(pres.ShapeType.rect, { x:0.5, y:1.3, w:1.5, h:0.06, fill:{ color: theme.accent }, line:{ color: theme.accent } });
+  };
+  for(let i = 0; i < total; i++){
+    const meta = outline[i]; const slide = pres.addSlide(); decorate(slide, i);
+    if(meta.slot === 'cover'){
+      slide.addText(meta.title, { x:0.6, y:2.0, w:12.1, h:1.8, fontSize:40, bold:true, color:theme.title, fontFace:theme.font, align:'center', valign:'middle' });
+      if(state.mind.desc) slide.addText(state.mind.desc, { x:1.2, y:4.0, w:10.9, h:1.3, fontSize:16, color:theme.body, fontFace:theme.font, align:'center' });
+      const who = [state.ppt.author, id.sid ? `${id.cls ? id.cls + ' ' : ''}${id.sid}` : ''].filter(Boolean).join(' ｜ ');
+      if(who) slide.addText(who, { x:0.6, y:5.6, w:12.1, h:0.5, fontSize:14, color:theme.accent, fontFace:theme.font, align:'center', italic:true });
+      slide.addText(dateStr, { x:0.6, y:6.3, w:12.1, h:0.4, fontSize:12, color:theme.body, fontFace:theme.font, align:'center' });
+    } else if(meta.slot === 'agenda'){
+      titleBar(slide, meta.title);
+      const items = outline.slice(2).filter(s=>s.slot!=='thanks').map((s,n)=>`${n+1}. ${s.title}`);
+      slide.addText(items.join('\n'), { x:0.7, y:1.7, w:12.0, h:5.2, fontSize: items.length > 12 ? 12 : items.length > 9 ? 14 : 18, color:theme.body, fontFace:theme.font, valign:'top', paraSpaceAfter:4 });
+    } else if(meta.slot === 'intro'){
+      titleBar(slide, meta.title);
+      const lines = [];
+      if(state.mind.title) lines.push((zh ? '專題名稱：' : 'Title: ') + state.mind.title);
+      if(state.mind.desc) lines.push('', state.mind.desc);
+      lines.push('', zh ? `本系統採用 IPO 結構化設計，包含 ${nI} 項輸入、${nP} 項處理、${nO} 項輸出。` : `IPO design: ${nI} inputs, ${nP} processes, ${nO} outputs.`);
+      if(state.run?.ok) lines.push('', zh ? `程式已於平台內實際執行，產出 ${state.run.charts.length} 張圖表。` : `Code executed in-browser, ${state.run.charts.length} charts produced.`);
+      slide.addText(lines.join('\n'), { x:0.7, y:1.7, w:12.0, h:5.0, fontSize:16, color:theme.body, fontFace:theme.font, valign:'top', paraSpaceAfter:8 });
+    } else if(meta.slot === 'mindmap'){
+      titleBar(slide, meta.title);
+      if(state.assets?.mindmap) slide.addImage({ data: state.assets.mindmap, x:1.87, y:1.5, w:9.6, h:5.4 });
+      else {
+        const cols = [ {title:'📥 INPUT', items:state.mind.inputs, color:'3B82F6'}, {title:'⚙️ PROCESS', items:state.mind.processes, color:'A855F7'}, {title:'📊 OUTPUT', items:state.mind.outputs, color:'EC4899'} ];
+        cols.forEach((c, k)=>{ const x = 0.5 + k*4.2;
+          slide.addShape(pres.ShapeType.roundRect, { x, y:1.7, w:4.0, h:5.3, fill:{ color:'FFFFFF', transparency:80 }, line:{ color:c.color, width:2 }, rectRadius:0.1 });
+          slide.addText(c.title, { x, y:1.85, w:4.0, h:0.5, fontSize:16, bold:true, color:c.color, fontFace:theme.font, align:'center' });
+          slide.addText((c.items||[]).map(s=>'• '+s).join('\n'), { x:x+0.2, y:2.4, w:3.6, h:4.5, fontSize:12, color:theme.body, fontFace:theme.font, valign:'top' }); });
+      }
+    } else if(meta.slot === 'ipo'){
+      titleBar(slide, meta.title);
+      const rows = state.ipo.rows.filter(r=>r.stage===meta.stage);
+      if(rows.length){
+        const hdr = o => ({ text:o, options:{ bold:true, fill:{ color: theme.accent }, color:'FFFFFF' } });
+        const tableData = [[hdr(zh?'項目':'Item'), hdr(zh?'說明':'Description')]];
+        rows.forEach(r => tableData.push([r.name, r.note || '-']));
+        slide.addTable(tableData, { x:0.5, y:1.7, w:12.3, h: Math.min(5.0, 0.5 + rows.length * 0.55), fontSize: rows.length > 7 ? 11 : 13, color:theme.body, fontFace:theme.font, border:{ type:'solid', color:'CCCCCC', pt:0.5 }, colW:[3.8, 8.5] });
+      } else slide.addText(zh?'（無資料）':'(No data)', { x:0.7, y:3, w:12, h:1, fontSize:18, color:theme.body, fontFace:theme.font, align:'center' });
+    } else if(meta.slot === 'code'){
+      titleBar(slide, meta.title);
+      const lines = (state.code[meta.kind] || '').split('\n').filter(l => !/^#\s*=+/.test(l)).slice(0, 26);
+      slide.addText(lines.join('\n'), { x:0.5, y:1.6, w:12.3, h:5.4, fontSize:9.5, fontFace:'Courier New', color:'1E293B', fill:{ color:'F1F5F9' }, valign:'top', paraSpaceAfter:0 });
+    } else if(meta.slot === 'run'){
+      titleBar(slide, meta.title);
+      const txt = (state.run.stdout || '').split('\n').filter(l => !l.startsWith('@@')).slice(0, 24).join('\n');
+      const hasChart = state.run.charts?.length;
+      slide.addText(txt, { x:0.5, y:1.6, w: hasChart ? 7.2 : 12.3, h:5.4, fontSize:9.5, fontFace:'Courier New', color:'E2E8F0', fill:{ color:'0F172A' }, valign:'top', paraSpaceAfter:0 });
+      if(hasChart) slide.addImage({ data: state.run.charts[0].png, x:8.0, y:1.6, w:4.8, h:2.67 });
+      if(hasChart) slide.addText(zh ? `執行耗時 ${(state.run.elapsed/1000).toFixed(1)} 秒，共 ${state.run.charts.length} 張圖` : `Elapsed ${(state.run.elapsed/1000).toFixed(1)}s`, { x:8.0, y:4.4, w:4.8, h:0.5, fontSize:11, color:theme.body, fontFace:theme.font, align:'center' });
+    } else if(meta.slot === 'chart'){
+      titleBar(slide, meta.title);
+      const c = state.run.charts[meta.idx];
+      if(c) slide.addImage({ data: c.png, x:1.9, y:1.55, w:9.5, h:5.28 });
+    } else if(meta.slot === 'storyboard'){
+      titleBar(slide, meta.title);
+      const stages = parseScriptStages(state.video.script);
+      const names = ['起','承','轉','合'], colors = ['3B82F6','A855F7','EC4899','F59E0B'];
+      stages.slice(0, 4).forEach((sg, k) => {
+        const x = 0.5 + k * 3.15;
+        slide.addShape(pres.ShapeType.roundRect, { x, y:1.6, w:3.0, h:5.3, fill:{ color:'FFFFFF', transparency: theme.bg === '0F172A' ? 90 : 0 }, line:{ color: colors[k], width:1.5 }, rectRadius:0.08 });
+        slide.addText(`${names[k]}  ${sg.time}`, { x, y:1.7, w:3.0, h:0.45, fontSize:14, bold:true, color:colors[k], fontFace:theme.font, align:'center' });
+        slide.addText(sg.narr.slice(0, 110), { x:x+0.15, y:2.25, w:2.7, h:2.5, fontSize:10.5, color:theme.body, fontFace:theme.font, valign:'top' });
+        slide.addText('🎥 ' + sg.visual.slice(0, 90), { x:x+0.15, y:4.85, w:2.7, h:1.9, fontSize:9.5, italic:true, color:theme.body, fontFace:theme.font, valign:'top' });
+      });
+    } else if(meta.slot === 'thanks'){
+      slide.addText(meta.title, { x:0.6, y:2.6, w:12.1, h:1.6, fontSize:48, bold:true, color:theme.title, fontFace:theme.font, align:'center', valign:'middle' });
+      slide.addText([state.ppt.author, id.sid ? `${id.cls ? id.cls + ' ' : ''}${id.sid}` : ''].filter(Boolean).join(' ｜ '), { x:0.6, y:4.4, w:12.1, h:0.6, fontSize:18, color:theme.body, fontFace:theme.font, align:'center' });
+      slide.addText(zh ? '感謝您的聆聽與指導' : 'Thank you for your attention', { x:0.6, y:5.2, w:12.1, h:0.5, fontSize:14, color:theme.accent, fontFace:theme.font, align:'center', italic:true });
+    }
+  }
+  return pres;
+}
+buildAndDownloadPPTX = async function(){
+  refreshOutline();
+  const btn = event?.target; if(btn){ btn.disabled = true; btn.innerHTML = '<span class="spinner"></span> 生成中...'; }
+  try{
+    const pres = await buildPresentation();
+    await pres.writeFile({ fileName: `${safeName()}.pptx` });
+    markComplete(4); saveState(); trackExport('pptx');
+    toast('PPTX 已下載', 'ok');
+  }catch(e){ console.error(e); toast('PPT 生成失敗：' + e.message, 'err'); }
+  finally{ if(btn){ btn.disabled = false; btn.innerHTML = '📊 生成並下載 PPTX'; } }
+};
+buildPPTXBlob = async function(){
+  refreshOutline();
+  const pres = await buildPresentation();
+  return await pres.write({ outputType:'blob' });
+};
+
+// ============ 影音腳本：AI 或離線 ============
+generateScript = async function(){
+  const len = parseInt($('#vidLen').value) || 60;
+  const t1 = parseInt($('#vidT1').value) || 10, t2 = parseInt($('#vidT2').value) || 20, t3 = parseInt($('#vidT3').value) || 20;
+  if(len - t1 - t2 - t3 < 5){ toast('起承轉時長超出影片總長，請調整', 'warn'); return; }
+  Object.assign(state.video, { len, t1, t2, t3, aud: $('#vidAud').value, style: $('#vidStyle').value });
+  const btn = event?.target; if(btn){ btn.disabled = true; btn.innerHTML = '<span class="spinner"></span> 生成腳本中...'; }
+  try{
+    const t = (a,b) => `${Math.floor(a/60)}:${String(a%60).padStart(2,'0')}-${Math.floor(b/60)}:${String(b%60).padStart(2,'0')}`;
+    const { result, mode } = await aiOrOffline('影音腳本', async ()=>{
+      const mindText = `INPUT：${state.mind.inputs.join('、')}\nPROCESS：${state.mind.processes.join('、')}\nOUTPUT：${state.mind.outputs.join('、')}`;
+      const runText = state.run?.stdout ? `\n程式實際執行結果（可引用其中數字）：\n${state.run.stdout.slice(0, 800)}` : '';
+      if(btn) btn.innerHTML = '<span class="spinner"></span> 階段 1/3 生成腳本中...';
+      const s1 = await callAI('你是專業中文影片編導', `你是專業教育影片編導。根據以下學生專題，生成起承轉合四幕影片腳本。
+
+專題：${state.mind.title || '專題系統'}
+描述：${state.mind.desc || ''}
+心智圖：${mindText}${runText}
+
+影片總長 ${len} 秒，受眾「${state.video.aud}」，風格「${state.video.style}」。
+
+直接輸出以下四幕，不加前言說明：
+
+起（${t(0,t1)}）
+【旁白摘要】用一個尖銳問題或衝擊數字吸引注意，引發共鳴
+【畫面描述】建議對應的視覺畫面
+
+承（${t(t1,t1+t2)}）
+【旁白摘要】展示技術如何解決問題，引述 PROCESS 中的核心邏輯
+【畫面描述】建議對應的視覺畫面
+
+轉（${t(t1+t2,t1+t2+t3)}）
+【旁白摘要】真實使用情境，讓觀眾看到「有了它之後」的場景
+【畫面描述】建議對應的視覺畫面
+
+合（${t(t1+t2+t3,len)}）
+【旁白摘要】量化效益數字＋情感呼籲＋行動呼籲
+【畫面描述】建議對應的視覺畫面`, 1500);
+      if(btn) btn.innerHTML = '<span class="spinner"></span> 階段 2/3 生成旁白中...';
+      const s2 = await callAI('你是專業中文旁白撰稿人', `根據以下影片腳本，生成完整旁白逐字稿。\n\n腳本：\n${s1}\n\n規則：\n- 總字數約 ${Math.round(len*4)} 字（${len} 秒影片）\n- 每段前加時間標記，格式：[0:00-0:10]，時間必須從 0:00 連續到 ${t(len,len).split('-')[0]}\n- 口語中文，每句 ≤20 字，動詞開頭\n- 數字具體\n- 直接輸出旁白，不加任何說明文字`, 1500);
+      if(btn) btn.innerHTML = '<span class="spinner"></span> 階段 3/3 生成影片指令...';
+      const s3 = await callAI('你是 AI 影片提示語專家', `根據以下影片腳本，為每幕生成一個 AI 影片生成提示語（中文，60-80字，含主體/環境/動作/鏡頭/風格/光線六要素）。\n\n腳本：\n${s1}\n\n嚴格按以下格式輸出四行，不加任何說明：\n起→[提示語]\n承→[提示語]\n轉→[提示語]\n合→[提示語]`, 600);
+      if(!parseScriptStages(s1).length) throw new Error('腳本格式無法解析');
+      return { script: s1, narration: s2, prompts: s3 };
+    }, async ()=> Offline.script(state));
+    state.video.script = result.script; state.video.narration = result.narration; state.video.prompts = result.prompts;
+    renderScript(result.script); renderNarration(result.narration); renderPrompts(result.prompts);
+    generateSubtitles();
+    $('#scriptResultCard').style.display = ''; $('#videoMakerCard').style.display = '';
+    markComplete(5); saveState();
+    toast(mode === 'ai' ? '✨ AI 影音腳本生成完成，可以開始製作影片' : '📴 已用離線引擎生成腳本，可以開始製作影片', 'ok');
+  }catch(e){ console.error(e); toast('腳本生成失敗：' + e.message, 'err'); }
+  finally{ if(btn){ btn.disabled = false; btn.innerHTML = '🎬 生成影音腳本'; } }
+};
+
+// ============ 影片製作（Canvas + MediaRecorder）============
+let videoBlob = null, videoAbort = null;
+function narrationSegments(){
+  const segs = [];
+  (state.video.narration || '').split('\n').forEach(line => {
+    const m = line.match(/^\[(\d+):(\d{2})-(\d+):(\d{2})\]\s*(.*)$/);
+    if(m) segs.push({ start: +m[1]*60 + +m[2], end: +m[3]*60 + +m[4], text: m[5].trim() });
+  });
+  return segs;
+}
+function buildScenes(){
+  const v = state.video, stages = parseScriptStages(v.script || '');
+  const b = [0, v.t1, v.t1 + v.t2, v.t1 + v.t2 + v.t3, v.len];
+  const names = ['起','承','轉','合'];
+  return names.map((n, i) => ({ name: n, start: b[i], end: b[i+1], narr: stages[i]?.narr || '', visual: stages[i]?.visual || '',
+    kind: ['title','mindmap','result','ending'][i] }));
+}
+function drawVideoFrame(ctx, W, H, t, scenes, segs, assets){
+  const font = "'Microsoft JhengHei','PingFang TC','Noto Sans CJK TC','Noto Sans TC',sans-serif";
+  const sc = scenes.find(s => t >= s.start && t < s.end) || scenes[scenes.length - 1];
+  const idx = scenes.indexOf(sc), local = t - sc.start, dur = sc.end - sc.start;
+  const fade = Math.min(1, local / 0.8, (dur - local) / 0.8);
+  // 背景
+  const g = ctx.createLinearGradient(0, 0, W, H);
+  const pal = [['#0f1722','#2d1b4e'],['#0f172a','#1e3a8a'],['#0f1722','#3b0764'],['#111827','#0f766e']][idx] || ['#0f1722','#2d1b4e'];
+  g.addColorStop(0, pal[0]); g.addColorStop(1, pal[1]); ctx.fillStyle = g; ctx.fillRect(0, 0, W, H);
+  // 漂浮光暈
+  for(let k = 0; k < 3; k++){
+    const cx = W * (0.2 + 0.3 * k) + Math.sin(t * 0.3 + k) * 60, cy = H * 0.5 + Math.cos(t * 0.25 + k * 2) * 80;
+    const rg = ctx.createRadialGradient(cx, cy, 0, cx, cy, 260);
+    rg.addColorStop(0, ['rgba(168,85,247,.18)','rgba(59,130,246,.16)','rgba(236,72,153,.14)'][k]); rg.addColorStop(1, 'rgba(0,0,0,0)');
+    ctx.fillStyle = rg; ctx.fillRect(0, 0, W, H);
+  }
+  ctx.save(); ctx.globalAlpha = Math.max(0, fade);
+  ctx.textBaseline = 'middle';
+  // 幕標籤
+  ctx.fillStyle = ['#3b82f6','#a855f7','#ec4899','#f59e0b'][idx]; roundRect(ctx, 40, 34, 120, 40, 20); ctx.fill();
+  ctx.fillStyle = '#fff'; ctx.font = `700 20px ${font}`; ctx.textAlign = 'center'; ctx.fillText(`第${['一','二','三','四'][idx]}幕・${sc.name}`, 100, 54);
+  ctx.textAlign = 'left'; ctx.fillStyle = 'rgba(255,255,255,.55)'; ctx.font = `16px ${font}`; ctx.fillText(state.mind.title || '', 180, 54);
+  const zoom = 1 + local * 0.006;   // Ken Burns
+  if(sc.kind === 'title'){
+    ctx.textAlign = 'center'; ctx.fillStyle = '#fff'; ctx.font = `700 ${Math.round(56 * Math.min(1.15, zoom))}px ${font}`;
+    wrapText(ctx, state.mind.title || '專題', W - 200).slice(0, 2).forEach((l, i) => ctx.fillText(l, W/2, H * 0.36 + i * 70));
+    ctx.font = `24px ${font}`; ctx.fillStyle = 'rgba(255,255,255,.8)';
+    wrapText(ctx, state.mind.desc || sc.narr, W - 300).slice(0, 3).forEach((l, i) => ctx.fillText(l, W/2, H * 0.56 + i * 36));
+  } else if(sc.kind === 'mindmap'){
+    if(assets.mind){
+      const iw = W * 0.62 * zoom, ih = iw * 9 / 16;
+      ctx.save(); ctx.shadowColor = 'rgba(0,0,0,.5)'; ctx.shadowBlur = 30; ctx.drawImage(assets.mind, 40 + (W*0.62 - iw)/2, H*0.16 + (W*0.62*9/16 - ih)/2, iw, ih); ctx.restore();
+    }
+    // 右側 IPO 條列逐項出現
+    const rows = state.ipo.rows.slice(0, 9); const x0 = W * 0.68;
+    ctx.textAlign = 'left'; ctx.font = `700 22px ${font}`; ctx.fillStyle = '#fff'; ctx.fillText('IPO 結構', x0, H * 0.18);
+    rows.forEach((r, i) => {
+      const show = local > 0.4 + i * (dur * 0.6 / rows.length); if(!show) return;
+      const col = { input:'#3b82f6', process:'#a855f7', output:'#ec4899' }[r.stage];
+      ctx.fillStyle = col; roundRect(ctx, x0, H * 0.22 + i * 44, 8, 30, 4); ctx.fill();
+      ctx.fillStyle = '#e2e8f0'; ctx.font = `19px ${font}`; ctx.fillText(wrapText(ctx, r.name, W * 0.28)[0] || '', x0 + 20, H * 0.22 + i * 44 + 15);
+    });
+  } else if(sc.kind === 'result'){
+    const charts = assets.charts || [];
+    if(charts.length){
+      const which = Math.min(charts.length - 1, Math.floor(local / Math.max(3, dur / charts.length)));
+      const img = charts[which]; const iw = W * 0.55, ih = iw * img.height / img.width;
+      ctx.save(); ctx.shadowColor = 'rgba(0,0,0,.5)'; ctx.shadowBlur = 30; ctx.drawImage(img, 50, H * 0.5 - ih / 2, iw, ih); ctx.restore();
+    }
+    // 右側終端機輸出
+    const x0 = charts.length ? W * 0.6 : 60, w0 = charts.length ? W * 0.37 : W - 120;
+    ctx.fillStyle = 'rgba(0,0,0,.55)'; roundRect(ctx, x0, H * 0.16, w0, H * 0.66, 14); ctx.fill();
+    ctx.save(); roundRect(ctx, x0, H * 0.16, w0 - 10, H * 0.66, 14); ctx.clip();
+    ctx.fillStyle = '#22c55e'; ctx.font = `15px 'Consolas','Menlo',monospace`; ctx.textAlign = 'left';
+    const lines = (state.run?.stdout || (state.mind.outputs.map(o => '📊 ' + o).join('\n')) || '').split('\n').filter(l => l.trim()).slice(0, 18);
+    const nShow = Math.min(lines.length, Math.floor(local * 4) + 1);   // 打字機效果
+    lines.slice(0, nShow).forEach((l, i) => ctx.fillText(l, x0 + 16, H * 0.16 + 26 + i * 24));
+    ctx.restore();
+  } else {
+    ctx.textAlign = 'center'; ctx.fillStyle = '#fff'; ctx.font = `700 44px ${font}`;
+    ctx.fillText(state.mind.title || '專題', W/2, H * 0.3);
+    ctx.font = `22px ${font}`; ctx.fillStyle = 'rgba(255,255,255,.85)';
+    const kp = [];
+    if(state.run?.charts?.length) kp.push(`✓ 程式實際執行，產出 ${state.run.charts.length} 張成果圖`);
+    kp.push(`✓ ${state.ipo.rows.filter(r=>r.stage==='input').length} 項輸入 → ${state.ipo.rows.filter(r=>r.stage==='process').length} 項處理 → ${state.ipo.rows.filter(r=>r.stage==='output').length} 項輸出`);
+    kp.push('先思考、後驗證 — 用 IPO 思維打造智慧系統');
+    kp.forEach((l, i) => { if(local > 0.5 + i * 0.8) ctx.fillText(l, W/2, H * 0.44 + i * 42); });
+    const id = aeGetIdentity() || {};
+    ctx.font = `18px ${font}`; ctx.fillStyle = '#c4b5fd'; ctx.fillText([state.ppt.author, id.cls, id.sid].filter(Boolean).join(' ｜ ') || '智慧專題創作平台', W/2, H * 0.72);
+  }
+  ctx.restore();
+  // 字幕
+  const seg = segs.find(s => t >= s.start && t < s.end);
+  if(seg){
+    ctx.font = `700 26px ${font}`; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+    const tw = ctx.measureText(seg.text).width + 40;
+    ctx.fillStyle = 'rgba(0,0,0,.6)'; roundRect(ctx, W/2 - tw/2, H - 78, tw, 46, 10); ctx.fill();
+    ctx.fillStyle = '#fff'; ctx.fillText(seg.text, W/2, H - 55);
+  }
+  // 進度條
+  ctx.fillStyle = 'rgba(255,255,255,.15)'; ctx.fillRect(0, H - 6, W, 6);
+  ctx.fillStyle = '#a855f7'; ctx.fillRect(0, H - 6, W * (t / state.video.len), 6);
+}
+function loadImg(src){ return new Promise(res => { if(!src) return res(null); const i = new Image(); i.onload = ()=>res(i); i.onerror = ()=>res(null); i.src = src; }); }
+async function prepareVideoAssets(){
+  if(!state.assets?.mindmap) await captureMindmapAsset();
+  const mind = await loadImg(state.assets?.mindmap);
+  const charts = (await Promise.all((state.run?.charts || []).map(c => loadImg(c.png)))).filter(Boolean);
+  return { mind, charts };
+}
+// 背景音樂：Web Audio 合成柔和和弦墊
+function startBgm(ctxA, dest, style){
+  const master = ctxA.createGain(); master.gain.value = 0.05; master.connect(dest);
+  const chords = style === '活潑教學' ? [[262,330,392],[294,370,440],[330,415,494],[262,330,392]] : [[196,247,294],[220,262,330],[175,220,262],[196,247,294]];
+  const oscs = [];
+  chords[0].forEach((f, i) => { const o = ctxA.createOscillator(); o.type = i === 0 ? 'triangle' : 'sine'; o.frequency.value = f; const gg = ctxA.createGain(); gg.gain.value = 0.6; o.connect(gg); gg.connect(master); o.start(); oscs.push(o); });
+  const timer = setInterval(() => { const c = chords[Math.floor(ctxA.currentTime / 4) % chords.length]; oscs.forEach((o, i) => o.frequency.linearRampToValueAtTime(c[i] || c[0], ctxA.currentTime + 0.8)); }, 4000);
+  // 輕微節拍
+  const beat = setInterval(() => { const o = ctxA.createOscillator(); o.type = 'sine'; o.frequency.value = 880; const gg = ctxA.createGain(); gg.gain.setValueAtTime(0.03, ctxA.currentTime); gg.gain.exponentialRampToValueAtTime(0.0001, ctxA.currentTime + 0.25); o.connect(gg); gg.connect(master); o.start(); o.stop(ctxA.currentTime + 0.3); }, 2000);
+  return () => { clearInterval(timer); clearInterval(beat); oscs.forEach(o => { try{ o.stop(); }catch(e){} }); };
+}
+async function makeVideo(){
+  if(!state.video.script){ toast('請先生成影音腳本', 'warn'); return; }
+  if(typeof MediaRecorder === 'undefined'){ toast('此瀏覽器不支援 MediaRecorder，請改用 Chrome／Edge', 'err'); return; }
+  const btn = $('#btnMakeVideo'); btn.disabled = true;
+  const canvas = $('#videoCanvas'); const W = canvas.width = 1280, H = canvas.height = 720; const ctx = canvas.getContext('2d');
+  $('#videoPreviewWrap').style.display = 'none'; $('#videoProgressWrap').style.display = '';
+  const scenes = buildScenes(), segs = narrationSegments(), assets = await prepareVideoAssets();
+  const len = state.video.len, useMic = $('#vidMic').checked, withBgm = $('#vidBgm').checked;
+  const fps = 30;
+  let ctxA = null, stopBgm = null, micStream = null;
+  try{
+    const stream = canvas.captureStream(fps);
+    if(withBgm || useMic){
+      ctxA = new (window.AudioContext || window.webkitAudioContext)();
+      const dest = ctxA.createMediaStreamDestination();
+      if(withBgm) stopBgm = startBgm(ctxA, dest, state.video.style);
+      if(useMic){
+        try{ micStream = await navigator.mediaDevices.getUserMedia({ audio: true }); ctxA.createMediaStreamSource(micStream).connect(dest); }
+        catch(e){ toast('無法取得麥克風：' + e.message + '，改為無旁白錄製', 'warn'); }
+      }
+      dest.stream.getAudioTracks().forEach(tr => stream.addTrack(tr));
+    }
+    const mime = ['video/webm;codecs=vp9,opus','video/webm;codecs=vp8,opus','video/webm'].find(m => MediaRecorder.isTypeSupported(m)) || '';
+    const rec = new MediaRecorder(stream, { mimeType: mime || undefined, videoBitsPerSecond: 4_000_000 });
+    const chunks = []; rec.ondataavailable = e => { if(e.data.size) chunks.push(e.data); };
+    const done = new Promise(res => { rec.onstop = res; });
+    rec.start(500);
+    const t0 = performance.now(); let aborted = false; videoAbort = () => { aborted = true; };
+    // 提詞機：顯示目前旁白
+    const teleprompter = $('#teleprompter');
+    await new Promise(res => {
+      const loop = () => {
+        const t = (performance.now() - t0) / 1000;
+        if(t >= len || aborted){ res(); return; }
+        drawVideoFrame(ctx, W, H, t, scenes, segs, assets);
+        const seg = segs.find(s => t >= s.start && t < s.end); const nxt = segs.find(s => s.start >= t);
+        teleprompter.innerHTML = `<b style="color:#fff;font-size:18px">${escapeHtml(seg?.text || '')}</b><br><span style="color:var(--muted)">下一句：${escapeHtml(nxt && nxt !== seg ? nxt.text : '')}</span>`;
+        $('#videoProgressBar').style.width = (t / len * 100) + '%'; $('#videoProgressText').textContent = `錄製中 ${t.toFixed(1)} / ${len} 秒`;
+        requestAnimationFrame(loop);
+      }; loop();
+    });
+    rec.stop(); await done;
+    videoBlob = await fixWebmDuration(new Blob(chunks, { type: mime || 'video/webm' }), len * 1000);
+    const url = URL.createObjectURL(videoBlob);
+    const vid = $('#videoPreview'); vid.src = url; $('#videoPreviewWrap').style.display = '';
+    $('#videoInfo').textContent = `✓ 影片完成：${len} 秒、${(videoBlob.size/1024/1024).toFixed(2)} MB（${mime || 'webm'}）${withBgm ? '，含背景音樂' : ''}${micStream ? '，含麥克風旁白' : ''}。字幕已燒錄在畫面中；另可下載 .srt。`;
+    state.video.made = { ts: Date.now(), size: videoBlob.size, len, mime };
+    saveState(); trackExport('mp4');
+    cloudReport('project-video', 1, 1, { len, size: videoBlob.size });
+    toast(aborted ? '已中止，保留目前錄到的片段' : '🎞 影片製作完成！', 'ok');
+    renderProgressOverview();
+  }catch(e){ console.error(e); toast('影片製作失敗：' + e.message, 'err'); }
+  finally{
+    if(stopBgm) stopBgm(); if(micStream) micStream.getTracks().forEach(t => t.stop()); if(ctxA) ctxA.close();
+    $('#videoProgressWrap').style.display = 'none'; btn.disabled = false; videoAbort = null;
+  }
+}
+function abortVideo(){ if(videoAbort) videoAbort(); }
+// MediaRecorder 產出的 webm 沒有時長中繼資料 → 在 Segment/Info 補上 Duration，播放器才能顯示長度與拖曳
+async function fixWebmDuration(blob, durationMs){
+  try{
+    const buf = new Uint8Array(await blob.arrayBuffer());
+    const readVint = (pos, keepMarker) => { const b = buf[pos]; let len = 1; while(len <= 8 && !(b & (0x80 >> (len - 1)))) len++; if(len > 8) return null; let v = keepMarker ? b : (b & (0xFF >> len)); for(let i = 1; i < len; i++) v = v * 256 + buf[pos + i]; return { value: v, length: len }; };
+    const ID_SEGMENT = 0x18538067, ID_INFO = 0x1549A966, ID_DURATION = 0x4489;
+    let pos = 0;
+    // EBML header
+    const h = readVint(pos, true); const hs = readVint(pos + h.length); pos += h.length + hs.length + hs.value;
+    const seg = readVint(pos, true); if(seg.value !== ID_SEGMENT) return blob;
+    const segSize = readVint(pos + seg.length); let p = pos + seg.length + segSize.length; const segEnd = segSize.value >= 0xFFFFFFFFFFFFF ? buf.length : p + segSize.value;
+    while(p < segEnd){
+      const id = readVint(p, true); const sz = readVint(p + id.length); if(!id || !sz) return blob;
+      if(id.value === ID_INFO){
+        const infoStart = p, dataStart = p + id.length + sz.length, dataEnd = dataStart + sz.value;
+        let q = dataStart;
+        while(q < dataEnd){ const cid = readVint(q, true); const csz = readVint(q + cid.length); if(cid.value === ID_DURATION) return blob; q += cid.length + csz.length + csz.value; }
+        const dur = new Uint8Array(2 + 1 + 8); dur[0] = 0x44; dur[1] = 0x89; dur[2] = 0x88; new DataView(dur.buffer).setFloat64(3, durationMs);
+        const newSize = sz.value + dur.length;
+        const sizeBytes = new Uint8Array(8); sizeBytes[0] = 0x01; for(let i = 7; i >= 1; i--){ sizeBytes[i] = Math.floor(newSize / Math.pow(256, 7 - i)) & 0xFF; }
+        const out = new Uint8Array(buf.length - sz.length + 8 + dur.length);
+        out.set(buf.subarray(0, infoStart + id.length), 0);
+        out.set(sizeBytes, infoStart + id.length);
+        out.set(dur, infoStart + id.length + 8);
+        out.set(buf.subarray(dataStart), infoStart + id.length + 8 + dur.length);
+        return new Blob([out], { type: blob.type });
+      }
+      if(id.value === 0x1F43B675) break;   // 到 Cluster 還沒看到 Info 就放棄
+      p += id.length + sz.length + sz.value;
+    }
+    return blob;
+  }catch(e){ console.warn('fixWebmDuration', e); return blob; }
+}
+function downloadVideo(){
+  if(!videoBlob){ toast('尚未製作影片', 'warn'); return; }
+  downloadBlob(videoBlob, `${safeName()}.webm`, videoBlob.type);
+}
+// 預覽（含瀏覽器 TTS 旁白，不錄製）
+let previewStop = null;
+async function previewVideoWithTTS(){
+  if(!state.video.script){ toast('請先生成影音腳本', 'warn'); return; }
+  if(previewStop){ previewStop(); return; }
+  const canvas = $('#videoCanvas'); const W = canvas.width = 1280, H = canvas.height = 720; const ctx = canvas.getContext('2d');
+  $('#videoPreviewWrap').style.display = 'none';
+  const scenes = buildScenes(), segs = narrationSegments(), assets = await prepareVideoAssets();
+  const len = state.video.len; const t0 = performance.now(); let stop = false;
+  const spoken = new Set();
+  const voices = speechSynthesis.getVoices(); const zhVoice = voices.find(v => /zh[-_]TW/i.test(v.lang)) || voices.find(v => /zh/i.test(v.lang));
+  const btn = $('#btnPreviewVideo'); btn.textContent = '⏹ 停止預覽';
+  previewStop = () => { stop = true; speechSynthesis.cancel(); previewStop = null; btn.textContent = '▶ 預覽（TTS 旁白）'; };
+  const loop = () => {
+    const t = (performance.now() - t0) / 1000;
+    if(t >= len || stop){ previewStop?.(); return; }
+    drawVideoFrame(ctx, W, H, t, scenes, segs, assets);
+    const seg = segs.find(s => t >= s.start && t < s.end);
+    if(seg && !spoken.has(seg)){ spoken.add(seg); const u = new SpeechSynthesisUtterance(seg.text); u.lang = 'zh-TW'; if(zhVoice) u.voice = zhVoice; u.rate = 1.05; speechSynthesis.speak(u); }
+    requestAnimationFrame(loop);
+  }; loop();
+}
+
+// ============ 成果打包（v4）============
+finalExport = async function(){
+  const btn = event?.target; if(btn){ btn.disabled = true; btn.innerHTML = '<span class="spinner"></span> 打包中...'; }
+  try{
+    const zip = new JSZip(); const name = safeName();
+    const b64 = d => d.split(',')[1];
+    zip.file(`${name}_project.json`, JSON.stringify(state, null, 2));
+    if(state.assets?.mindmap) zip.file(`01_心智圖/${name}_mindmap.png`, b64(state.assets.mindmap), { base64: true });
+    if(state.mind.inputs.length) zip.file(`01_心智圖/${name}_mindmap.mmd.md`, `# ${state.mind.title} — Mind Map\n\n\`\`\`mermaid\n${buildMermaidSource()}\n\`\`\`\n`);
+    updateIpoMarkdown(); const ipoMd = $('#ipoMarkdown').value; if(ipoMd) zip.file(`02_IPO/${name}_IPO.md`, ipoMd);
+    if(state.ipo.rows.length && typeof XLSX !== 'undefined'){
+      const ws = XLSX.utils.json_to_sheet(state.ipo.rows.map(r => ({ 階段: r.stage.toUpperCase(), 項目: r.name, 說明: r.note || '' })));
+      const wb = XLSX.utils.book_new(); XLSX.utils.book_append_sheet(wb, ws, 'IPO');
+      zip.file(`02_IPO/${name}_IPO.xlsx`, XLSX.write(wb, { type:'array', bookType:'xlsx' }));
+    }
+    if(state.code.full){
+      const ext = state.code.lang === 'python' ? 'py' : state.code.lang === 'javascript' ? 'js' : 'java';
+      zip.file(`03_程式/${name}.${ext}`, state.code.full);
+      if(state.code.lang === 'python') zip.file(`03_程式/${name}.ipynb`, buildIpynbJson());
+    }
+    if(state.run?.stdout){
+      zip.file(`03_程式/執行結果.txt`, `執行時間：${new Date(state.run.ts).toLocaleString('zh-TW')}\n耗時：${state.run.elapsed} ms\n狀態：${state.run.ok ? '成功' : '失敗：' + state.run.error}\n\n${state.run.stdout}`);
+      (state.run.charts || []).forEach((c, i) => zip.file(`03_程式/chart_${i+1}.png`, b64(c.png), { base64: true }));
+    }
+    if(state.completed[4] || state.completed[3]){
+      try{ const blob = await buildPPTXBlob(); if(blob) zip.file(`04_簡報/${name}.pptx`, blob); }catch(e){ console.warn('PPTX build skipped', e); }
+    }
+    if(state.video.script){
+      zip.file(`05_影片/${name}_video_script.md`, `# ${state.mind.title} — 影音腳本\n\n## 影片腳本\n${state.video.script}\n\n## 旁白\n${state.video.narration}\n\n## AI 影片提示\n${state.video.prompts}`);
+      if(state.video.srt) zip.file(`05_影片/${name}.srt`, state.video.srt);
+      if(state.video.vtt) zip.file(`05_影片/${name}.vtt`, state.video.vtt);
+      if(videoBlob) zip.file(`05_影片/${name}.webm`, videoBlob);
+    }
+    const id = aeGetIdentity() || {};
+    zip.file('README.md', `# ${state.mind.title || '專題'} — 成果壓縮包\n\n${id.sid ? `學號 ${id.sid}${id.cls ? '／班級 ' + id.cls : ''}\n` : ''}由智慧專題創作平台 ${new Date().toLocaleString('zh-TW')} 生成。\n\n| 資料夾 | 內容 |\n|---|---|\n| 01_心智圖 | 心智圖 PNG、Mermaid 原始碼 |\n| 02_IPO | IPO 結構表（Markdown、Excel） |\n| 03_程式 | Python 程式（.py／.ipynb）、執行結果、成果圖表 |\n| 04_簡報 | 專題簡報 PPTX |\n| 05_影片 | 影片（.webm）、腳本、字幕（.srt／.vtt） |\n\n\`${name}_project.json\` 可匯入平台繼續編輯。\n`);
+    const blob = await zip.generateAsync({ type:'blob' });
+    downloadBlob(blob, `${name}_full_package.zip`, 'application/zip'); trackExport('zip');
+    cloudReport('project-final', Object.values(state.completed).filter(Boolean).length, 5, { files: Object.keys(zip.files).length, hasVideo: !!videoBlob, hasRun: !!state.run?.ok });
+    toast('全部成果已打包下載 🎉', 'ok');
+  }catch(e){ console.error(e); toast('打包失敗：' + e.message, 'err'); }
+  finally{ if(btn){ btn.disabled = false; btn.innerHTML = '🎉 完成！打包下載全部成果'; } }
+};
+function buildIpynbJson(){
+  const cells = [{ cell_type:'markdown', metadata:{}, source:[`# ${state.mind.title || '專題'}\n`, `${state.mind.desc || ''}\n`] },
+                 { cell_type:'code', metadata:{}, execution_count:null, outputs:[], source: state.code.full.split('\n').map((l, i, a) => i < a.length - 1 ? l + '\n' : l) }];
+  return JSON.stringify({ cells, metadata:{ kernelspec:{ display_name:'Python 3', language:'python', name:'python3' } }, nbformat:4, nbformat_minor:5 }, null, 1);
+}
+
+// ============ 成果總覽 ============
+function renderProgressOverview(){
+  const el = $('#progressOverview'); if(!el) return;
+  const items = [
+    { ok: !!state.completed[1], label:'① 心智圖', detail: state.mind.inputs.length ? `${state.mind.inputs.length}／${state.mind.processes.length}／${state.mind.outputs.length} 項${state.assets?.mindmap ? '，已產生圖片' : ''}` : '尚未填寫', go: 1 },
+    { ok: !!state.completed[2], label:'② IPO 表', detail: state.ipo.rows.length ? `${state.ipo.rows.length} 列，${state.ipo.rows.filter(r=>r.note).length} 列有說明` : '尚未建立', go: 2 },
+    { ok: !!state.completed[3], label:'③ Python', detail: state.code.full ? `${state.code.full.split('\n').length} 行${state.run ? (state.run.ok ? `，已執行（${state.run.charts.length} 張圖）` : '，執行出錯') : '，尚未執行'}` : '尚未生成', go: 3 },
+    { ok: !!state.completed[4], label:'④ PPT', detail: state.completed[4] ? `已生成 ${state.ppt.outline?.length || ''} 頁` : '尚未生成', go: 4 },
+    { ok: !!state.completed[5], label:'⑤ 影片', detail: state.video.script ? (state.video.made ? `影片 ${state.video.made.len} 秒已製作` : '腳本完成，尚未製作影片') : '尚未生成腳本', go: 5 }
+  ];
+  const done = items.filter(i => i.ok).length;
+  el.innerHTML = `<div style="display:flex;align-items:center;gap:10px;margin-bottom:10px"><div class="bar" style="flex:1;height:8px;background:var(--surface2);border-radius:4px;overflow:hidden"><i style="display:block;height:100%;width:${done/5*100}%;background:linear-gradient(90deg,#3b82f6,#a855f7)"></i></div><b style="font-size:13px">${done} / 5</b></div>` +
+    items.map(i => `<div class="score-row" style="cursor:pointer" onclick="goStep(${i.go})"><span>${i.ok ? '✅' : '⬜'} ${i.label}</span><span style="color:var(--muted);font-size:12px">${escapeHtml(i.detail)}</span></div>`).join('');
+}
+
+// ============ 一鍵示範全流程 ============
+async function runFullPipelineDemo(){
+  readMindForm();
+  if(!state.mind.title){ if(!confirm('尚未填專題名稱，要載入示範專題（智慧農業）並自動走完全流程嗎？')) return; loadDemoData(); }
+  const steps = ['生成心智圖', '建立 IPO 表', '生成 Python 程式', '執行程式', '生成簡報大綱', '生成影音腳本'];
+  const box = $('#pipelineStatus'); box.style.display = ''; box.innerHTML = steps.map((s, i) => `<div id="pl-${i}">⬜ ${s}</div>`).join('');
+  const mark = (i, ok, extra) => { $(`#pl-${i}`).innerHTML = `${ok ? '✅' : '❌'} ${steps[i]}${extra ? ' — ' + escapeHtml(extra) : ''}`; };
+  const cur = (i) => { $(`#pl-${i}`).innerHTML = `<span class="spinner"></span> ${steps[i]}…`; };
+  try{
+    cur(0); goStep(1); await generateMindOneClick(); saveMindAndAdvance(); mark(0, true, `${state.mind.inputs.length}/${state.mind.processes.length}/${state.mind.outputs.length} 項`);
+    cur(1); await autoFillIpoNotes(); saveIpoAndAdvance(); mark(1, true, `${state.ipo.rows.length} 列`);
+    cur(2); $('#codeMode').value = aiReady() ? 'ai' : 'template'; $('#codeLang').value = 'python'; await generateCode(); mark(2, !!state.code.full, `${state.code.full.split('\n').length} 行`);
+    cur(3); await runPythonInBrowser(); mark(3, !!state.run?.ok, state.run?.ok ? `${state.run.charts.length} 張圖，${(state.run.elapsed/1000).toFixed(1)} 秒` : (state.run?.error || '失敗'));
+    saveCodeAndAdvance();
+    cur(4); refreshOutline(); markComplete(4); mark(4, true, `${state.ppt.outline.length} 頁（按「生成並下載 PPTX」取得檔案）`);
+    cur(5); goStep(5); await generateScript(); mark(5, !!state.video.script, '可按「🎞 製作影片」');
+    goStep(5);
+    toast('🚀 全流程完成！請下載 PPTX、製作影片，再打包成果', 'ok');
+  }catch(e){ toast('流程中斷：' + e.message, 'err'); }
+}
+
+// ============ 初始化 ============
+window.addEventListener('DOMContentLoaded', ()=>{
+  renderIdentityCard();
+  updateAIStatus();
+  updateCloudStatus();
+  renderProgressOverview();
+  if(state.assets?.mindmap){ const p = $('#mindCanvasPreview'); if(p){ p.src = state.assets.mindmap; $('#mindCanvasCard').style.display = ''; } }
+  if(state.run?.stdout){ $('#runResultCard').style.display = ''; $('#runStdout').textContent = state.run.stdout; $('#runStatus').textContent = state.run.ok ? '（上次執行結果）' : '（上次執行出錯）';
+    $('#runCharts').innerHTML = (state.run.charts || []).map(c => `<figure style="margin:0"><img src="${c.png}" style="width:100%;border-radius:10px;background:#fff"><figcaption style="font-size:12px;color:var(--muted);text-align:center;margin-top:4px">${escapeHtml(c.title)}</figcaption></figure>`).join(''); }
+  if(state.video?.script){ renderScript(state.video.script); renderNarration(state.video.narration || ''); renderPrompts(state.video.prompts || ''); $('#srtOut').value = state.video.srt || ''; $('#vttOut').value = state.video.vtt || ''; $('#scriptResultCard').style.display = ''; $('#videoMakerCard').style.display = ''; }
+  if(typeof speechSynthesis !== 'undefined') speechSynthesis.getVoices();
+  setTimeout(updateCloudStatus, 1500);
+});
+
 </script>
+<!-- AI 賦能 Hub 共同身分／雲端鏡射（載入失敗不影響平台運作） -->
+<script src="https://ai-empower-hub.netlify.app/assets/bridge.js" data-app="studio" data-quiet defer></script>
 </body>
 </html>

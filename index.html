@@ -358,7 +358,8 @@ table.ipo-table{width:100%;border-collapse:collapse;background:var(--surface2);b
     <div class="ai-status" id="aiStatus">
       <span class="dot"></span><span id="aiStatusText">尚未設定</span>
     </div>
-    <button class="sidebar-btn" onclick="openAISettings()">⚙ 設定 AI（班級碼／金鑰／離線）</button>
+    <select id="aiQuick" onchange="applyAiQuick(this.value)" style="padding:8px 10px;font-size:12px;margin:6px 0"></select>
+    <button class="sidebar-btn" onclick="openAISettings()">⚙ 進階設定（金鑰／代管網址）</button>
     <div class="ai-status" id="cloudStatus" style="margin-top:8px"><span class="dot"></span><span id="cloudStatusText">雲端：未連線</span></div>
   </div>
 
@@ -4549,7 +4550,30 @@ markComplete = function(n){
 };
 
 // ============ AI 設定擴充：老師代管（proxy）／離線 ============
-if(!localStorage.getItem(AI_KEY)) aiConfig.provider = 'proxy';   // 首次使用預設為老師代管
+const AI_CLASS_CODES = ['MIS2026'];          // ← 老師可改：班級碼清單（第一個為預設；需與 Apps Script 的 CLASS_CODES 一致）
+if(!localStorage.getItem(AI_KEY)){ aiConfig.provider = 'proxy'; aiConfig.classCode = AI_CLASS_CODES[0]; }   // 首次使用：預設老師代管＋預設班級碼，學生不用設定
+if(aiConfig.provider === 'proxy' && !aiConfig.classCode) aiConfig.classCode = AI_CLASS_CODES[0];
+
+// 側邊欄下拉：一步完成 AI 設定
+function renderAiQuickSelect(){
+  const sel = $('#aiQuick'); if(!sel) return;
+  const opts = AI_CLASS_CODES.map(c => `<option value="proxy:${c}">🏫 老師代管 · 班級 ${c}</option>`).join('') +
+    `<option value="offline">📴 離線模式（不用 AI）</option><option value="custom">🔑 自備金鑰／進階設定…</option>`;
+  sel.innerHTML = opts;
+  sel.value = aiConfig.provider === 'proxy' ? `proxy:${aiConfig.classCode}` : aiConfig.provider === 'offline' ? 'offline' : 'custom';
+  if(sel.value !== (aiConfig.provider === 'proxy' ? `proxy:${aiConfig.classCode}` : aiConfig.provider === 'offline' ? 'offline' : 'custom')) sel.value = 'custom';
+}
+async function applyAiQuick(v){
+  if(v === 'custom'){ openAISettings(); return; }
+  if(v === 'offline'){ aiConfig.provider = 'offline'; }
+  else { aiConfig.provider = 'proxy'; aiConfig.classCode = v.split(':')[1]; }
+  saveAI(); updateAIStatus();
+  if(aiConfig.provider === 'proxy'){
+    toast('測試老師代管連線…');
+    try{ await callAI('你是測試助手', '請回覆「連線正常」四字', 50); toast('✓ AI 已就緒（老師代管）', 'ok'); }
+    catch(e){ toast('代管連線失敗：' + e.message + '，將自動改用離線引擎', 'warn'); }
+  } else toast('已切換離線模式', 'ok');
+}
 if(aiConfig.proxyUrl === undefined) aiConfig.proxyUrl = '';
 if(aiConfig.classCode === undefined) aiConfig.classCode = '';
 
@@ -4621,7 +4645,7 @@ saveAISettings = function(){
   aiConfig.model = $('#aiModel').value.trim();
   aiConfig.classCode = $('#aiClassCode').value.trim();
   aiConfig.proxyUrl = $('#aiProxyUrl').value.trim();
-  saveAI(); updateAIStatus(); closeModal('aiModal');
+  saveAI(); updateAIStatus(); renderAiQuickSelect(); closeModal('aiModal');
   toast('AI 設定已儲存', 'ok');
 };
 testAIConnection = async function(){
@@ -5455,6 +5479,8 @@ async function runFullPipelineDemo(){
 // ============ 初始化 ============
 window.addEventListener('DOMContentLoaded', ()=>{
   renderIdentityCard();
+  loadAI(); if(aiConfig.provider === 'proxy' && !aiConfig.classCode) aiConfig.classCode = AI_CLASS_CODES[0];
+  renderAiQuickSelect();
   updateAIStatus();
   updateCloudStatus();
   renderProgressOverview();

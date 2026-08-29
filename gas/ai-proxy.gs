@@ -10,7 +10,7 @@
  *       GEMINI_API_KEY = 你的 Gemini 金鑰（https://aistudio.google.com/app/apikey）
  *       CLASS_CODES    = MIS2026,IM2026     （多個班級碼用逗號分隔）
  *       DAILY_LIMIT    = 60                 （每位學生每日呼叫上限，選填，預設 60）
- *       MODEL          = gemini-2.0-flash   （選填）
+ *       MODEL          = gemini-2.5-flash   （選填）
  *  3. 部署 → 新增部署作業 → 類型「網頁應用程式」→ 執行身分「我」→ 存取權「所有人」→ 部署。
  *  4. 複製 /exec 網址，貼到 index.html 的 AI_PROXY_URL_DEFAULT（或讓學生在「設定 AI」貼上）。
  *  5. 改程式後：部署 → 管理部署作業 → 編輯 → 版本「新版本」→ 部署（網址不變）。
@@ -18,7 +18,7 @@
  * 用量紀錄：第一次呼叫時會自動在雲端硬碟建立試算表「智慧專題平台 AI 用量」。
  */
 
-var DEFAULT_MODEL = 'gemini-2.0-flash';
+var DEFAULT_MODEL = 'gemini-2.5-flash';
 
 function doGet(e) {
   var a = (e && e.parameter && e.parameter.action) || 'ping';

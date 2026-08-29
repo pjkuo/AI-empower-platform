@@ -4484,11 +4484,13 @@ const PYODIDE_URL = 'https://cdn.jsdelivr.net/pyodide/v0.26.4/full/';
 const AE_ID_KEY = 'ae.identity.v1';
 
 // ============ 共同身分（?sid=&cls=）============
+let _aeUrlIdApplied = false;
 function aeGetIdentity(){
   try{
     const q = new URLSearchParams(location.search);
     const sid = (q.get('sid') || '').trim(), cls = (q.get('cls') || '').trim();
-    if(sid){
+    if(sid && !_aeUrlIdApplied){   // 網址帶身分只在載入時套用一次，之後以使用者的選擇為準
+      _aeUrlIdApplied = true;
       const o = { sid, cls, ts: Date.now() };
       localStorage.setItem(AE_ID_KEY, JSON.stringify(o));
       return o;

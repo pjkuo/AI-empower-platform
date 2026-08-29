@@ -1135,7 +1135,7 @@ let aiConfig = {
 };
 
 const DEFAULT_MODELS = {
-  gemini: 'gemini-2.0-flash',
+  gemini: 'gemini-2.5-flash',
   anthropic: 'claude-sonnet-4-5',
   openai: 'gpt-4o-mini'
 };
@@ -4478,7 +4478,7 @@ const Offline = {
 
 // ============ 設定（老師可改） ============
 const AE_HUB_URL = 'https://ai-empower-hub.netlify.app';
-const AI_PROXY_URL_DEFAULT = '';   // ← 部署 gas/ai-proxy.gs 後，把 /exec 網址貼在這裡（學生就不用自己填）
+const AI_PROXY_URL_DEFAULT = 'https://script.google.com/macros/s/AKfycbzeZIdckk825BFGen2C2l9WYG_qYSJUDTTAzLMAmhg6fdvi_HrwZsa518PSAurleMSm/exec';   // ← 部署 gas/ai-proxy.gs 後，把 /exec 網址貼在這裡（學生就不用自己填）
 const PYODIDE_URL = 'https://cdn.jsdelivr.net/pyodide/v0.26.4/full/';
 const AE_ID_KEY = 'ae.identity.v1';
 
@@ -4549,7 +4549,7 @@ markComplete = function(n){
 };
 
 // ============ AI 設定擴充：老師代管（proxy）／離線 ============
-aiConfig.provider = aiConfig.provider || 'gemini';
+if(!localStorage.getItem(AI_KEY)) aiConfig.provider = 'proxy';   // 首次使用預設為老師代管
 if(aiConfig.proxyUrl === undefined) aiConfig.proxyUrl = '';
 if(aiConfig.classCode === undefined) aiConfig.classCode = '';
 

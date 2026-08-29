@@ -4550,8 +4550,8 @@ markComplete = function(n){
 };
 
 // ============ AI 設定擴充：老師代管（proxy）／離線 ============
-const AI_CLASS_CODES = ['MIS2026'];          // ← 老師可改：班級碼清單（第一個為預設；需與 Apps Script 的 CLASS_CODES 一致）
-if(!localStorage.getItem(AI_KEY)){ aiConfig.provider = 'proxy'; aiConfig.classCode = AI_CLASS_CODES[0]; }   // 首次使用：預設老師代管＋預設班級碼，學生不用設定
+const AI_CLASS_CODES = ['MIS2026', 'IM2026'];          // ← 老師可改：班級碼清單（第一個為預設；需與 Apps Script 的 CLASS_CODES 一致）
+if(!localStorage.getItem(AI_KEY)){ aiConfig.provider = 'proxy'; const _c = (aeGetIdentity()||{}).cls || ''; aiConfig.classCode = AI_CLASS_CODES.find(c => _c && c.toUpperCase().startsWith(_c.toUpperCase())) || AI_CLASS_CODES[0]; }   // 首次使用：預設老師代管＋預設班級碼，學生不用設定
 if(aiConfig.provider === 'proxy' && !aiConfig.classCode) aiConfig.classCode = AI_CLASS_CODES[0];
 
 // 側邊欄下拉：一步完成 AI 設定
@@ -4566,7 +4566,7 @@ function renderAiQuickSelect(){
 async function applyAiQuick(v){
   if(v === 'custom'){ openAISettings(); return; }
   if(v === 'offline'){ aiConfig.provider = 'offline'; }
-  else { aiConfig.provider = 'proxy'; aiConfig.classCode = v.split(':')[1]; }
+  else { aiConfig.provider = 'proxy'; aiConfig.classCode = v.split(':')[1]; const id = aeGetIdentity() || {}; const cls = aiConfig.classCode.replace(/\d+$/, ''); if(!id.cls || id.cls !== cls) aeSetIdentity(id.sid || '', cls); }
   saveAI(); updateAIStatus();
   if(aiConfig.provider === 'proxy'){
     toast('測試老師代管連線…');

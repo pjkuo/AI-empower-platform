@@ -49,7 +49,15 @@ body{
 .brand{font-size:18px;font-weight:800;background:linear-gradient(135deg,#a855f7,#3b82f6,#ec4899);
   -webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;
   margin-bottom:4px;line-height:1.3}
-.brand-sub{font-size:11px;color:var(--muted);margin-bottom:24px}
+.brand-sub{font-size:11px;color:var(--muted);margin-bottom:12px}
+.home-btn{display:flex;align-items:center;justify-content:center;gap:8px;width:100%;margin-bottom:16px;padding:10px 12px;border-radius:10px;
+  font-size:14px;font-weight:800;color:#fff;text-decoration:none;font-family:inherit;
+  background:linear-gradient(135deg,rgba(168,85,247,.35),rgba(59,130,246,.35));border:1px solid rgba(168,85,247,.55);transition:all .2s}
+.home-btn:hover{background:linear-gradient(135deg,rgba(168,85,247,.55),rgba(59,130,246,.55));box-shadow:0 0 18px rgba(168,85,247,.25)}
+.home-btn small{font-size:11px;font-weight:600;color:#d8c8f5}
+.home-fab{display:none;position:fixed;right:14px;bottom:14px;z-index:900;padding:11px 14px;border-radius:999px;font-size:14px;font-weight:800;color:#fff;text-decoration:none;
+  background:linear-gradient(135deg,#a855f7,#3b82f6);box-shadow:0 6px 20px rgba(0,0,0,.4)}
+@media(max-width:900px){.home-fab{display:inline-flex;align-items:center;gap:6px}}
 
 .steps{display:flex;flex-direction:column;gap:6px;margin-bottom:24px}
 .step-item{
@@ -324,6 +332,7 @@ table.ipo-table{width:100%;border-collapse:collapse;background:var(--surface2);b
 <aside class="sidebar">
   <div class="brand">智慧專題創作平台</div>
   <div class="brand-sub">Mind Map → IPO → Python → PPT → Video</div>
+  <a class="home-btn" id="homeBtn" href="https://ai-empower-hub.netlify.app/" title="回到 AI 賦能教學 Hub 首頁">🏠 返回首頁 <small>AI 賦能教學 Hub</small></a>
   <div id="identityCard" style="margin-top:12px;padding:10px;background:var(--surface2);border-radius:8px;border:1px solid var(--border2)"></div>
 
   <!-- 專題切換器 -->
@@ -414,6 +423,8 @@ table.ipo-table{width:100%;border-collapse:collapse;background:var(--surface2);b
     v4：心智圖→IPO→Python（瀏覽器內執行）→PPT→影片，全流程可離線完成；AI 可由老師代管。資料儲存於瀏覽器本地，進度回報至 AI 賦能 Hub。
   </div>
 </aside>
+
+<a class="home-fab" id="homeFab" href="https://ai-empower-hub.netlify.app/" title="返回首頁">🏠 首頁</a>
 
 <!-- ============ Main ============ -->
 <main class="main">

@@ -66,8 +66,8 @@ body{
   display:flex;align-items:center;justify-content:center;font-weight:700;font-size:13px;flex-shrink:0}
 .step-item.active .step-num{background:linear-gradient(135deg,var(--accent),var(--accent2));color:#fff}
 .step-info{flex:1;min-width:0}
-.step-name{font-size:13px;font-weight:600;line-height:1.2}
-.step-desc{font-size:10px;color:var(--muted);margin-top:2px;line-height:1.2}
+.step-name{font-size:14.5px;font-weight:700;line-height:1.25}
+.step-desc{font-size:12px;color:var(--muted);margin-top:3px;line-height:1.3}
 .step-check{color:var(--ok);font-size:14px}
 
 .sidebar-section{margin-top:24px;padding-top:20px;border-top:1px solid var(--border2)}
@@ -81,10 +81,39 @@ body{
 .sidebar-btn{
   width:100%;padding:10px;margin-top:8px;border-radius:8px;
   background:var(--surface);border:1px solid var(--border2);
-  color:var(--text);cursor:pointer;font-size:12px;font-family:inherit;
+  color:var(--text);cursor:pointer;font-size:13px;font-family:inherit;
   transition:all .2s;
 }
 .sidebar-btn:hover{background:rgba(168,85,247,.15);border-color:var(--accent)}
+
+/* ============ v4.1 新生引導：四步驟 ============ */
+.fg{position:relative;overflow:hidden;background:linear-gradient(135deg,rgba(168,85,247,.16),rgba(59,130,246,.14) 60%,rgba(236,72,153,.12));
+  border:1px solid rgba(168,85,247,.45);border-radius:16px;padding:22px 24px 20px;margin-bottom:24px}
+.fg-top{display:flex;align-items:flex-start;gap:14px;flex-wrap:wrap}
+.fg-badge{display:inline-block;font-size:12px;font-weight:800;letter-spacing:.12em;color:#1a1030;background:#f5c451;padding:4px 10px;border-radius:999px;margin-bottom:8px}
+.fg-h{font-size:clamp(21px,2.4vw,26px);font-weight:800;line-height:1.25;color:#fff;margin:0}
+.fg-lead{font-size:16px;line-height:1.65;color:#dbe4f0;margin:8px 0 0;max-width:72ch}
+.fg-lead b{color:#fff}
+.fg-x{margin-left:auto;background:transparent;border:1px solid var(--border);color:var(--muted);border-radius:8px;padding:6px 12px;cursor:pointer;font-size:13px;font-family:inherit;min-height:36px}
+.fg-x:hover{border-color:var(--accent);color:#fff}
+.fg-chain{display:flex;flex-wrap:wrap;align-items:center;gap:6px 10px;margin:14px 0 4px;font-size:15px;font-weight:700;color:#cbd5e1}
+.fg-chain i{font-style:normal;color:#f5c451}
+.fg-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:14px;margin-top:12px}
+.fg-st{background:rgba(15,23,42,.62);border:1px solid var(--border2);border-left:6px solid var(--ax,#a855f7);border-radius:14px;padding:14px 16px 13px}
+.fg-st.s1{--ax:#22c55e}.fg-st.s2{--ax:#3b82f6}.fg-st.s3{--ax:#f59e0b}.fg-st.s4{--ax:#ec4899}
+.fg-hd{display:flex;align-items:center;gap:10px;margin-bottom:8px}
+.fg-ic{font-size:26px;line-height:1}
+.fg-num{font-size:12.5px;font-weight:800;letter-spacing:.1em;color:var(--ax,#a855f7)}
+.fg-st h4{margin:0;font-size:19px;font-weight:800;color:#fff;line-height:1.25}
+.fg-row{display:grid;grid-template-columns:auto 1fr;gap:4px 10px;font-size:15.5px;line-height:1.6}
+.fg-lb{font-weight:800;color:#f5c451;white-space:nowrap}
+.fg-tx{color:#e2e8f0}.fg-tx b{color:#fff}
+.fg-go{margin-top:8px}
+.fg-go .btn{font-size:14px}
+.fg-foot{display:flex;flex-wrap:wrap;gap:10px 14px;align-items:center;margin-top:14px;font-size:14.5px;color:#cbd5e1;line-height:1.6}
+.fg-foot b{color:#fff}
+@media(max-width:1024px){.fg-grid{grid-template-columns:1fr}}
+@media(max-width:900px){.fg{padding:16px}.fg-row{font-size:15px}}
 
 /* ============ Main ============ */
 .main{padding:32px 40px 80px;max-width:1400px;width:100%}
@@ -92,7 +121,7 @@ body{
 .page-title{font-size:30px;font-weight:800;line-height:1.2;
   background:linear-gradient(135deg,#fff 0%,#cbd5e1 100%);
   -webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
-.page-sub{font-size:14px;color:var(--muted);margin-top:8px}
+.page-sub{font-size:15.5px;color:#b6c2d3;margin-top:8px;line-height:1.55}
 
 .panel{display:none;animation:fadeIn .3s ease}
 .panel.active{display:block}
@@ -104,7 +133,7 @@ body{
   padding:24px;margin-bottom:20px;
 }
 .card-title{font-size:16px;font-weight:700;margin-bottom:6px;display:flex;align-items:center;gap:8px}
-.card-desc{font-size:13px;color:var(--muted);margin-bottom:16px;line-height:1.5}
+.card-desc{font-size:14px;color:#aab7c8;margin-bottom:16px;line-height:1.6}
 
 /* ============ Form controls ============ */
 label{display:block;font-size:12px;font-weight:600;color:var(--muted);margin-bottom:6px;text-transform:uppercase;letter-spacing:.5px}
@@ -376,6 +405,7 @@ table.ipo-table{width:100%;border-collapse:collapse;background:var(--surface2);b
 
   <div class="sidebar-section">
     <h4>學習資源</h4>
+    <button class="sidebar-btn" onclick="showFreshGuide()">🎓 新生引導：四步驟</button>
     <button class="sidebar-btn" onclick="goStep(6)">📖 教學中心（影片＋PDF）</button>
     <button class="sidebar-btn" onclick="goStep(7)">📝 學習後測問卷</button>
   </div>
@@ -394,6 +424,38 @@ table.ipo-table{width:100%;border-collapse:collapse;background:var(--surface2);b
     <h1 class="page-title">① 心智圖編輯</h1>
     <div class="page-sub">用三分支結構刻畫專題：輸入 → 處理 → 輸出。每行一個項目，越具體越好。</div>
   </header>
+
+  <!-- v4.1 新生引導：四步驟（功能＋學習意義） -->
+  <div class="fg" id="freshGuide">
+    <div class="fg-top">
+      <div style="flex:1;min-width:260px">
+        <span class="fg-badge">🎓 新生必看 · 30 秒看懂</span>
+        <h2 class="fg-h">四個步驟，把一個想法做成能展示的作品</h2>
+        <p class="fg-lead">這個平台不是要你先會寫程式，而是<b>先把想法想清楚，再讓 AI 幫你把它做出來</b>。每一步都有「一鍵生成」，但你要負責<b>看懂、修改、驗證</b>——這才是資管人的本事。</p>
+      </div>
+      <button class="fg-x" onclick="hideFreshGuide()" title="收起（側欄可再打開）">✕ 收起</button>
+    </div>
+    <div class="fg-chain"><i>① 心智圖</i> → <i>② IPO 結構表</i> → <i>③ Python 執行</i> → <i>④ 簡報＋影片</i>　（想清楚 → 拆清楚 → 做出來 → 說出來）</div>
+    <div class="fg-grid">
+      <div class="fg-st s1"><div class="fg-hd"><span class="fg-ic">🧠</span><div><div class="fg-num">STEP 1</div><h4>心智圖：把想法想清楚</h4></div></div>
+        <div class="fg-row"><span class="fg-lb">功能</span><span class="fg-tx">填專題名稱，用 <b>INPUT／PROCESS／OUTPUT</b> 三個分支寫下你的系統要「吃什麼、做什麼、產出什麼」；🪄 一鍵生成可以先給你一版草稿。</span>
+        <span class="fg-lb">意義</span><span class="fg-tx">任何系統都是「輸入→處理→輸出」。先用你自己的話拆解，是<b>運算思維</b>的第一課，也是「先思考」的起點。</span></div>
+        <div class="fg-go"><button class="btn btn-accent" onclick="document.getElementById('proj-title').focus()">→ 從填專題名稱開始</button></div></div>
+      <div class="fg-st s2"><div class="fg-hd"><span class="fg-ic">📋</span><div><div class="fg-num">STEP 2</div><h4>IPO 結構表：把想法拆清楚</h4></div></div>
+        <div class="fg-row"><span class="fg-lb">功能</span><span class="fg-tx">心智圖自動變成一張<b>三模組表格</b>，每一項都要說明「用什麼資料、怎麼處理、產出什麼格式」；✨ 可請 AI 補充說明。</span>
+        <span class="fg-lb">意義</span><span class="fg-tx">表格逼你把每一句模糊的話講具體。<b>講得夠具體，程式才寫得出來</b>——這是從「想」到「做」的橋。</span></div>
+        <div class="fg-go"><button class="btn" onclick="goStep(2)">→ 看 IPO 結構表</button></div></div>
+      <div class="fg-st s3"><div class="fg-hd"><span class="fg-ic">🐍</span><div><div class="fg-num">STEP 3</div><h4>Python：真的把它做出來</h4></div></div>
+        <div class="fg-row"><span class="fg-lb">功能</span><span class="fg-tx">依 IPO 表生成<b>可執行</b>的 Python（模擬資料、統計、圖表），按 ▶ 就在瀏覽器裡跑，不用安裝任何東西；結果與圖表自動存進專題。</span>
+        <span class="fg-lb">意義</span><span class="fg-tx">看到程式跑出你設定的結果，就是「<b>後驗證</b>」：對照 IPO 表檢查它做的對不對，不對就回頭改。AI 出草稿，判斷的人是你。</span></div>
+        <div class="fg-go"><button class="btn" onclick="goStep(3)">→ 看 Python 工作台</button></div></div>
+      <div class="fg-st s4"><div class="fg-hd"><span class="fg-ic">🎬</span><div><div class="fg-num">STEP 4</div><h4>簡報＋影片：把成果說出來</h4></div></div>
+        <div class="fg-row"><span class="fg-lb">功能</span><span class="fg-tx">前三步自動彙整成 <b>PPTX</b>（含心智圖、執行結果、圖表），再生成腳本、字幕，直接錄成影片；🎉 一鍵打包，截圖成果總覽上傳 Moodle。</span>
+        <span class="fg-lb">意義</span><span class="fg-tx">做得出來還要<b>講得清楚</b>。用 3 分鐘讓別人聽懂你的系統，是資管人「懂技術也懂表達」的核心能力。</span></div>
+        <div class="fg-go"><button class="btn" onclick="goStep(4)">→ 看簡報與影片</button></div></div>
+    </div>
+    <div class="fg-foot"><span>⏱ <b>第一次</b>走完約 15 分鐘；</span><span>🏫 AI 已由老師代管，不用申請金鑰；</span><span>💾 資料存在<b>這台電腦的這個瀏覽器</b>，換電腦請先「匯出專案」；</span><span>🚀 想先看範例？點側欄「一鍵示範全流程」。</span></div>
+  </div>
 
   <div class="card">
     <div class="card-title">📋 專題基本資料</div>
@@ -1233,6 +1295,11 @@ function saveAI(){
 }
 
 // ============ Step Navigation ============
+// v4.1 新生引導：四步驟（收起狀態記在本機）
+function hideFreshGuide(){ const g=document.getElementById('freshGuide'); if(g) g.style.display='none'; try{localStorage.setItem('ae.freshGuide.hidden','1')}catch(e){} }
+function showFreshGuide(){ const g=document.getElementById('freshGuide'); if(!g) return; g.style.display=''; try{localStorage.removeItem('ae.freshGuide.hidden')}catch(e){} goStep(1); g.scrollIntoView({behavior:'smooth',block:'start'}); }
+(function(){ try{ if(localStorage.getItem('ae.freshGuide.hidden')==='1'){ const g=document.getElementById('freshGuide'); if(g) g.style.display='none'; } }catch(e){} })();
+
 function goStep(n){
   state.step = n;
   $$('.step-item').forEach(b => {

@@ -1,0 +1,18 @@
+name: p1-patch
+on: push
+permissions:
+  contents: write
+jobs:
+  patch:
+    if: ${{ contains(github.event.head_commit.message, 'p1-run') }}
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - run: python3 .github/p1_patch.py
+      - run: |
+          git config user.name "pjkuo"
+          git config user.email "kuo0615@gmail.com"
+          git rm -q .github/workflows/p1-patch.yml .github/p1_patch.py
+          git add -A
+          git commit -m "P1-R1 雲端鏡射改接 GitHub 版 bridge.js v2（原 Netlify 網址已 404，鏡射中斷多時）；側欄 Hub 連結改指分流入口" -m "Co-Authored-By: Claude Fable 5 <noreply@anthropic.com>" -m "Claude-Session: https://claude.ai/code/session_0132fkQFFpgYs7gD13EjefU8"
+          git push

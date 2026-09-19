@@ -430,7 +430,7 @@ table.ipo-table{width:100%;border-collapse:collapse;background:var(--surface2);b
     <h4>學習資源</h4>
     <button class="sidebar-btn" onclick="showFreshGuide()">🎓 新生引導：四步驟</button>
     <button class="sidebar-btn" onclick="goStep(6)">📖 教學中心（影片＋PDF）</button>
-    <a class="sidebar-btn" style="display:block;text-decoration:none;text-align:left" href="https://ai-empower-hub.netlify.app/" target="_blank" rel="noopener">🔗 AI 賦能教學 Hub（課前評量・統計）</a>
+    <a class="sidebar-btn" style="display:block;text-decoration:none;text-align:left" href="https://pjkuo.github.io/" target="_blank" rel="noopener">🔗 AI 賦能教學 Hub（課前評量・統計）</a>
     <button class="sidebar-btn" onclick="goStep(7)">📝 學習後測問卷</button>
   </div>
 
@@ -4571,7 +4571,7 @@ const Offline = {
    =================================================================== */
 
 // ============ 設定（老師可改） ============
-const AE_HUB_URL = 'https://ai-empower-hub.netlify.app';
+const AE_HUB_URL = 'https://pjkuo.github.io/ai-empower';   // 2026-09-19 改指 GitHub（Netlify 僅凍結保留）
 const AI_PROXY_URL_DEFAULT = 'https://script.google.com/macros/s/AKfycbzeZIdckk825BFGen2C2l9WYG_qYSJUDTTAzLMAmhg6fdvi_HrwZsa518PSAurleMSm/exec';   // ← 部署 gas/ai-proxy.gs 後，把 /exec 網址貼在這裡（學生就不用自己填）
 const PYODIDE_URL = 'https://cdn.jsdelivr.net/pyodide/v0.26.4/full/';
 const AE_ID_KEY = 'ae.identity.v1';
@@ -5589,6 +5589,6 @@ window.addEventListener('DOMContentLoaded', ()=>{
 
 </script>
 <!-- AI 賦能 Hub 共同身分／雲端鏡射（載入失敗不影響平台運作） -->
-<script src="https://ai-empower-hub.netlify.app/assets/bridge.js" data-app="studio" data-quiet defer></script>
+<script src="https://pjkuo.github.io/ai-empower/assets/bridge.js" data-app="studio" data-quiet defer></script>
 </body>
 </html>

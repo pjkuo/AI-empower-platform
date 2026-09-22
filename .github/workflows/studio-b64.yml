@@ -1,20 +1,43 @@
-name: studio-b64-decode
-# 暫時性 workflow：把 _b64/studio.b64.* 解碼為 index.html（教學中心新增「新生必學：心智圖 × IPO」卡片），md5 驗證後自我清理。
+name: studio-ipo-card
+# Temporary workflow: insert the freshman must-learn Mindmap x IPO card into panel-6
+# (Tutorial Center) by anchored replacement, verified byte-exact by md5 gate.
+# Trigger: push of _b64/DONE. Success commit carries [skip ci].
+# All strings are ASCII (unicode-escaped) so this file survives any text channel.
 on:
   push:
     paths: ["_b64/DONE"]
 permissions:
   contents: write
 jobs:
-  decode:
+  insert:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - name: Decode & verify
+      - name: Insert card & verify
         run: |
           set -e
           [ -f _b64/DONE ] || { echo "no DONE marker, skip"; exit 0; }
-          cat _b64/studio.b64.* | base64 -d > index.html
+          python3 - <<'PYEOF'
+          import hashlib
+          src = open('index.html', encoding='utf-8').read()
+          anchor = '  <div class="card">\n    <div class="card-title">\U0001F3AC 模組影音教學 ＋ \U0001F4C4 PDF 講義</div>'
+          card = '''  <div class="card">
+              <div class="card-title">\U0001F9E0 新生必學：心智圖 × IPO（運算思維基礎能力）</div>
+              <div class="card-desc">第一次做專題前，先花 30 分鐘學會「用心智圖拆問題、用 IPO 找規律」——本平台步驟 ①（心智圖）與步驟 ②（IPO）的原理就是這一課。120 秒影片＋課堂教材＋線上練習單，學會再回來，一鍵生成的每一格你都看得懂、改得動。</div>
+              <div class="btn-row">
+                <a class="btn btn-primary" style="text-decoration:none" href="https://pjkuo.github.io/ai-empower/mindmap-ipo.html" target="_blank" rel="noopener">\U0001F4D6 開啟單元教材</a>
+                <a class="btn" style="text-decoration:none" href="https://pjkuo.github.io/ai-empower/ipo-worksheet.html" target="_blank" rel="noopener">✏️ 線上練習單</a>
+                <a class="btn btn-ghost" style="text-decoration:none" href="https://youtu.be/RgvnGZE6dMY" target="_blank" rel="noopener">▶ 120 秒影片</a>
+              </div>
+            </div>
+
+          '''
+          card = '\n'.join(l[10:] if l.startswith(' '*10) else l for l in card.split('\n'))
+          assert src.count(anchor) == 1, 'anchor not unique: %d' % src.count(anchor)
+          out = src.replace(anchor, card + anchor)
+          open('index.html', 'w', encoding='utf-8').write(out)
+          print('result md5:', hashlib.md5(out.encode('utf-8')).hexdigest())
+          PYEOF
           echo "2a6d1630013a6f6689a4b3f34de9cf7f  index.html" | md5sum -c -
           rm -rf _b64
       - name: Commit
@@ -22,5 +45,5 @@ jobs:
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git add -A
-          git commit -m "教學中心新增「🧠 新生必學：心智圖 × IPO（運算思維基礎能力）」卡片，連回 Hub 單元教材與練習單（base64 解碼、md5 驗證）[skip ci]"
+          git commit -m "Tutorial Center: add freshman must-learn Mindmap x IPO card (anchored insert, md5 verified) [skip ci]"
           git push
